@@ -37,9 +37,21 @@ public class OperatingSystemProcess {
         return out.toString().trim();
     }
 
-
+    @SneakyThrows
     public static String executeWithRetries(String[] commands, Map<String, String> environmentVariables, Integer numRetries) {
-        return "";
+        int retries = 0;
+        while (true) {
+            try {
+                return execute(commands, environmentVariables);
+            }
+            catch (Exception e) {
+                retries++;
+                if (retries >= numRetries) {
+                    throw new IOException(e);
+                }
+                // log failed exec
+            }
+        }
     }
 
 }

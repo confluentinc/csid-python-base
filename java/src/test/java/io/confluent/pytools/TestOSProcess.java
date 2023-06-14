@@ -29,7 +29,26 @@ class TestOSProcess {
         });
 
         assertThrows(IOException.class, () -> {
-            OperatingSystemProcess.execute(new String[]{"find", "-name", "doesnotexist.file"}, envVars);
+            OperatingSystemProcess.execute(new String[]{"find", "doesnotexist.file"}, envVars);
         });
     }
+
+    @Test
+    void retries() {
+        String output;
+        HashMap<String, String> envVars = new HashMap<String, String>();
+
+        envVars.put("BLAH", "blaaaah");
+        output = OperatingSystemProcess.executeWithRetries(new String[]{"printenv", "BLAH"}, envVars, 3);
+        assertEquals(output, "blaaaah");
+
+        assertThrows(IOException.class, () -> {
+            OperatingSystemProcess.executeWithRetries(new String[]{"blah", "blah"}, envVars, 3);
+        });
+
+        assertThrows(IOException.class, () -> {
+            OperatingSystemProcess.executeWithRetries(new String[]{"find", "doesnotexist.file"}, envVars, 3);
+        });
+    }
+
 }
