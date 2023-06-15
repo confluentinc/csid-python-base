@@ -49,7 +49,7 @@ public class PythonEnvironment {
     @SneakyThrows
     public static PythonEnvironment build(String[] pipRequirements, Path workingDirectory,
                              Path pythonExecutablePath, String venvName, String localDependenciesDirectory) {
-        ArrayList<String> paths = new ArrayList<String>();
+        HashSet<String> paths = new HashSet<String>();
 
         Path finalPythonExecutablePath = pythonExecutablePath;
         if (finalPythonExecutablePath == null) {

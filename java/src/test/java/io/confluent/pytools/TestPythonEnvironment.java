@@ -1,7 +1,6 @@
 package io.confluent.pytools;
 
 import lombok.SneakyThrows;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -14,25 +13,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class TestPythonEnvironment {
-    @Test
-    void basic() {
-        PythonEnvironment pyEnv = new PythonEnvironment(
-                "/Users/laurent/Virtualenvs/pemja/bin/python3.10",
-                new String[]{"/Users/laurent/Virtualenvs/pemja/lib/python3.10/site-packages"});
-        assertNotNull(pyEnv);
-        pyEnv.executePythonStatement("import algorithms.strings as s");
-
-        Object res = pyEnv.callPythonMethod("s.decode_string", "3[a]2[bc]");
-        assertEquals(res, "aaabcbc");
-        //pyEnv.executePythonStatement("print(s.decode_string(\"3[a]2[bc]\"))");
-    }
-
-    @Test
-    void defaultPython() {
-        Path myPython = PythonEnvironment.defaultPythonExecutablePath();
-        assertEquals(myPython.toString(), "/usr/bin/python3");
-    }
-
     public static void deleteDirectory(File directory) {
         // if the file is directory or not
         if (directory.isDirectory()) {
@@ -60,19 +40,31 @@ class TestPythonEnvironment {
     void venvInstall() {
         // use volatile java temp dir instead of /tmp/
         String tmpDir = Files.createTempDirectory(null).toFile().getAbsolutePath();
+        System.out.println("Temp Directory: " + tmpDir);
 
         String defaultPythonPath = PythonEnvironment.defaultPythonExecutablePath().toString();
 
-        PythonEnvironment pyEnv = PythonEnvironment.build(new String[]{"find-libpython==0.3.0", "pemja==0.3.0"}, Paths.get(tmpDir),
+        PythonEnvironment pyEnv = PythonEnvironment.build(
+                new String[]{"algorithms==0.1.4", "find-libpython==0.3.0", "pemja==0.3.0"}, Paths.get(tmpDir),
                 Paths.get(defaultPythonPath), null, null);
 
         String envPython = pyEnv.getPythonExePath();
+        System.out.println("Virtual environment created with python = " + envPython);
+
         Assertions.assertTrue(Files.exists(Paths.get(envPython)));
 
         String sitePackages = PythonEnvironment.getSitePackages(envPython);
+        System.out.println("and site packages = " + sitePackages);
 
         Path pemjaLib = Paths.get(sitePackages, "pemja");
         Assertions.assertTrue(Files.exists(pemjaLib));
+
+        System.out.print("Calling python code using pemja...");
+        // test the installed env --> run some python code
+        pyEnv.executePythonStatement("import algorithms.strings as s");
+        Object res = pyEnv.callPythonMethod("s.decode_string", "3[a]2[bc]");
+        assertEquals(res, "aaabcbc");
+        System.out.println("OK");
 
         // remove temp venv folder
         deleteDirectory(new File(tmpDir));
