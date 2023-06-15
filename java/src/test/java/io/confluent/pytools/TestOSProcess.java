@@ -11,10 +11,8 @@ class TestOSProcess {
     @Test
     void exec() {
         String output;
+        output = OperatingSystemProcess.execute(new String[]{"whereis", "python3"});
         HashMap<String, String> envVars = new HashMap<String, String>();
-
-        output = OperatingSystemProcess.execute(new String[]{"whereis", "python3"}, envVars);
-
         envVars.put("BLAH", "blaaaah");
         output = OperatingSystemProcess.execute(new String[]{"printenv", "BLAH"}, envVars);
         assertEquals(output, "blaaaah");

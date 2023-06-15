@@ -1,10 +1,17 @@
 package io.confluent.pytools;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.SneakyThrows;
 
 public class OperatingSystemProcess {
+
+    @SneakyThrows
+    public static String execute(String[] commands) {
+        HashMap<String, String> envVars = new HashMap<String, String>();
+        return execute(commands, envVars);
+    }
 
     @SneakyThrows
     public static String execute(String[] commands, Map<String, String> environmentVariables) {
