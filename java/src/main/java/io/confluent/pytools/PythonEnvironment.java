@@ -7,20 +7,22 @@ import pemja.core.PythonInterpreterConfig;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
+
+import static io.confluent.pytools.OperatingSystemProcess.executeWithRetries;
 
 public class PythonEnvironment {
-
-    //private final PythonInterpreterConfig config;
     private final PythonInterpreter interpreter;
+
+    private final String pythonExePath;
     public PythonEnvironment(String pythonExecutablePath, String[] paths) {
         PythonInterpreterConfig config = PythonInterpreterConfig.newBuilder()
                 .setPythonExec(pythonExecutablePath)
                 .setExcType(PythonInterpreterConfig.ExecType.MULTI_THREAD)
                 .addPythonPaths(paths)
                 .build();
+
+        pythonExePath = pythonExecutablePath;
 
         interpreter = new PythonInterpreter(config);
     }
@@ -42,10 +44,11 @@ public class PythonEnvironment {
      *                        the python environment will be created in "/app/venv1/"
      * @param pythonExecutablePath: optional, the python exe to used (default = default python3 exe of the system)
      * @param venvName: optional, the virtual environment name to use (default = "venv-<uuid>")
+     * @param localDependenciesDirectory: optional, directory with packages for offline installation
      */
     @SneakyThrows
-    public static void build(String[] pipRequirements, Path workingDirectory,
-                             Path pythonExecutablePath, String venvName) {
+    public static PythonEnvironment build(String[] pipRequirements, Path workingDirectory,
+                             Path pythonExecutablePath, String venvName, String localDependenciesDirectory) {
         ArrayList<String> paths = new ArrayList<String>();
 
         Path finalPythonExecutablePath = pythonExecutablePath;
@@ -56,18 +59,27 @@ public class PythonEnvironment {
         // create venv
         String finalVenvName = venvName;
         if (finalVenvName == null) {
-            finalVenvName = "venv-" + UUID.randomUUID().toString();
+            finalVenvName = "venv-" + UUID.randomUUID();
         }
-        Path venvPath = Paths.get(workingDirectory.toString(), venvName);
+        Path venvPath = Paths.get(workingDirectory.toString(), finalVenvName);
+
+        Path defaultSitePackages = Paths.get(getSitePackages(defaultPythonExecutablePath().toString()));
+        paths.add(defaultSitePackages.toString());
+        paths.add(defaultSitePackages.toString().replaceFirst("/lib/", "/lib64/"));
 
         Path venvPythonExecutablePath = createVirtualEnvironment(finalPythonExecutablePath, venvPath);
-        Path defaultSitePackages = Paths.get(getSitePackages(venvPythonExecutablePath.toString()));
+        Path venvSitePackages = Paths.get(getSitePackages(venvPythonExecutablePath.toString()));
+        paths.add(venvSitePackages.toString());
+        paths.add(venvSitePackages.toString().replaceFirst("/lib/", "/lib64/"));
 
-        paths.add(defaultSitePackages.toString());
         // install pip reqs
+        pipInstallRequirements(venvPythonExecutablePath.toString(), pipRequirements, localDependenciesDirectory);
+
         // returns new PythonEnvironment with the proper paths
+        return new PythonEnvironment(venvPythonExecutablePath.toString(), paths.toArray(String[]::new));
     }
 
+    @SneakyThrows
     private static Path createVirtualEnvironment(Path pythonExecutable, Path venvPath) {
         OperatingSystemProcess.execute(new String[]{pythonExecutable.toString(), "-m", "venv", venvPath.toString()});
         return Paths.get(venvPath.toString(), "bin", "python");
@@ -89,4 +101,21 @@ public class PythonEnvironment {
                 pythonExecutablePath, "-c", GET_CURRENT_SITE_PACKAGES_PATH_SCRIPT});
     }
 
+    private static void pipInstallRequirements(String pythonExecutable, String[] requirements, String localDependenciesDirectory) {
+        String sitePackagesPath = getSitePackages(pythonExecutable);
+        HashMap<String, String> envVars = new HashMap<>();
+        envVars.put("PYTHONPATH", sitePackagesPath);
+
+        ArrayList<String> pipInstallCommand = new ArrayList<>(List.of(new String[]{pythonExecutable, "-m", "pip", "install"}));
+        pipInstallCommand.addAll(List.of(requirements));
+        if (localDependenciesDirectory != null) {
+            pipInstallCommand.addAll(List.of("--find-links", localDependenciesDirectory));
+        }
+
+        executeWithRetries(pipInstallCommand.toArray(String[]::new), envVars, 3);
+    }
+
+    public String getPythonExePath() {
+        return pythonExePath;
+    }
 }
