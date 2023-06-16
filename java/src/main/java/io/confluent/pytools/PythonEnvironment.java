@@ -38,18 +38,25 @@ public class PythonEnvironment {
      * builds a complete python virtual environment
      * and returns a PythonEnvironment object that can be used to run Python code
      *
-     * @param pipRequirements: required,
-     * @param workingDirectory: required, where to install the venv and the files
-     *                        if venvName = "venv1" and workingDirectory = "/app/",
-     *                        the python environment will be created in "/app/venv1/"
-     * @param pythonExecutablePath: optional, the python exe to used (default = default python3 exe of the system)
-     * @param venvName: optional, the virtual environment name to use (default = "venv-<uuid>")
-     * @param localDependenciesDirectory: optional, directory with packages for offline installation
+     * @param pipRequirements            : required,
+     * @param workingDirectory           : required, where to install the venv and the files
+     *                                   if venvName = "venv1" and workingDirectory = "/app/",
+     *                                   the python environment will be created in "/app/venv1/"
+     * @param pythonExecutablePath       : optional, the python exe to used (default = default python3 exe of the system)
+     * @param venvName                   : optional, the virtual environment name to use (default = "venv-<uuid>")
+     * @param localDependenciesDirectory : optional, directory with packages for offline installation
+     * @param additionalPath             : optional, directory to be added to the path (used for providing
+     *                                   the user scripts directory)
      */
     @SneakyThrows
     public static PythonEnvironment build(String[] pipRequirements, Path workingDirectory,
-                             Path pythonExecutablePath, String venvName, String localDependenciesDirectory) {
+                                          Path pythonExecutablePath, String venvName, String localDependenciesDirectory,
+                                          String additionalPath) {
         HashSet<String> paths = new HashSet<String>();
+
+        if (additionalPath != null) {
+            paths.add(additionalPath);
+        }
 
         Path finalPythonExecutablePath = pythonExecutablePath;
         if (finalPythonExecutablePath == null) {
