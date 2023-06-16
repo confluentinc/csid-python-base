@@ -1,13 +1,29 @@
 package io.confluent.pytools;
 
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class TestPythonHost {
     @SneakyThrows
     @Test
     void basic() {
-        // create some files
-        // call PythonHost(String pythonExecutable, File scriptsDirectory, String entryPoint)
+        // test files are in resources (requirements.txt + test.py)
+        Path requirementsFile = Paths.get("src","test","resources", "requirements.txt");
+        Assertions.assertTrue(Files.exists(requirementsFile));
+
+        Path pythonScript = Paths.get("src","test","resources", "test.py");
+        Assertions.assertTrue(Files.exists(pythonScript));
+
+        String pythonExecutable = PythonEnvironment.defaultPythonExecutablePath().toString();
+
+        Path scriptsDirectory = Paths.get("src","test","resources");
+
+        PythonHost host = new PythonHost(pythonExecutable, scriptsDirectory.toFile(), "test.hello");
+        Assertions.assertNotNull(host);
     }
 }

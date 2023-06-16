@@ -5,17 +5,23 @@ import lombok.SneakyThrows;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
+import static java.nio.file.Files.readAllLines;
 
 public class PythonHost {
 
     private String[] requirements;
 
-    private static String importStatement;
-    private static String callableMethod;
+    private String importStatement;
+    private String callableMethod;
 
     private PythonEnvironment pythonEnv;
 
@@ -34,13 +40,15 @@ public class PythonHost {
         }
 
         // any requirements.txt?
-        String[] pipRequirements = new String[0];
+        List<String> pipRequirements = new ArrayList<>();
         File[] requirements = scriptsDirectory.listFiles(
                 (dir, name) -> name.equalsIgnoreCase("requirements.txt"));
         if (requirements != null) {
             File req = requirements[0];
-            // read it
+            pipRequirements = Files.readAllLines(req.toPath(), StandardCharsets.UTF_8);
         }
+
+        // TODO make sure requirements contain pemja
 
         // search for the file referenced in the entry point
         File[] pythonScripts = scriptsDirectory.listFiles((dir, name) -> name.endsWith(".py"));
@@ -53,9 +61,12 @@ public class PythonHost {
 
         // build the python environment
         String workingDirectory = "";
-        pythonEnv = PythonEnvironment.build(pipRequirements,
+        pythonEnv = PythonEnvironment.build(pipRequirements.toArray(new String[0]),
                 Paths.get(workingDirectory), Paths.get(pythonExecutable),
                 null, null, scriptsDirectory.toString());
+
+        // now that the env is running, we call "import <importStatement>" to be ready to call the function
+
     }
 
     /**
@@ -77,7 +88,7 @@ public class PythonHost {
      */
     private void buildEntryPoint(String entryPoint, File scriptsDirectory) throws IOException {
         // analyze entry point
-        String[] items = entryPoint.split(".");
+        String[] items = entryPoint.split("\\.");
         if (items.length < 2) {
             throw new IOException("Entry point " + entryPoint + " doesn't have the <script>.<function> format.");
         }
@@ -87,6 +98,15 @@ public class PythonHost {
 
         // search for the proper file (using scriptItems)
 
-        // open the file?
+        // open the file and check that a function with the proper name exists
     }
+
+    public void executePythonStatement(String pythonStatement) {
+        pythonEnv.executePythonStatement(pythonStatement);
+    }
+
+    public Object callPythonMethod(String methodName, Object... args) {
+        return pythonEnv.callPythonMethod(methodName, args);
+    }
+
 }
