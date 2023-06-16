@@ -20,7 +20,7 @@ public class PythonHost {
     private PythonEnvironment pythonEnv;
 
     public PythonHost(String pythonExecutable, File scriptsDirectory, String entryPoint) throws IOException {
-        // explores the corking directory to find requirements.txt
+        // explores the working directory to find requirements.txt
         // and build the PythonEnvironment
 
         // we check that it's a directory
