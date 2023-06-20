@@ -22,10 +22,10 @@ public class PythonHost {
     private String[] requirements;
 
     private String importStatement;
-    private String guestLibraryAlias;
+    private final String guestLibraryAlias;
     private String callableMethod;
 
-    private PythonEnvironment pythonEnv;
+    private final PythonEnvironment pythonEnv;
 
     public PythonHost(String pythonExecutable, File scriptsDirectory, String entryPoint) throws IOException {
         // explores the working directory to find requirements.txt
@@ -96,13 +96,33 @@ public class PythonHost {
             throw new IOException("Entry point " + entryPoint + " doesn't have the <script>.<function> format.");
         }
         callableMethod = items[items.length-1];
+
         String[] scriptItems = Arrays.copyOf(items, items.length-1);
+        String[] scriptPath = Arrays.copyOf(items, items.length-2);
+        String scriptName = items[items.length-2] + ".py";
+
         importStatement = String.join(".", scriptItems);
 
         // search for the proper file (using scriptItems)
+        Path targetScript = Paths.get(scriptsDirectory.toString(), String.join("/", scriptPath), scriptName);
 
         // open the file and check that a function with the proper name exists
+        List<String> scriptContents;
+
+        scriptContents = Files.readAllLines(targetScript, StandardCharsets.UTF_8);
+        boolean found = false;
+        for (String line : scriptContents) {
+            if (line.trim().startsWith("def " + callableMethod)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            throw new IOException(callableMethod + " function not found in " + targetScript);
+        }
     }
+
+
 
     public void executePythonStatement(String pythonStatement) {
         pythonEnv.executePythonStatement(pythonStatement);

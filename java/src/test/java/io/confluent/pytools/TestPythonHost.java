@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -51,5 +52,24 @@ public class TestPythonHost {
 
         Object res = host.callPythonMethod("hello");
         assertEquals(res, "just now");
+    }
+
+    @SneakyThrows
+    @Test
+    void badEntryPoint() {
+        // test files are in resources (requirements.txt + test.py)
+        Path requirementsFile = Paths.get("src","test","resources", "requirements.txt");
+        Assertions.assertTrue(Files.exists(requirementsFile));
+
+        Path pythonScript = Paths.get("src","test","resources", "test.py");
+        Assertions.assertTrue(Files.exists(pythonScript));
+
+        String pythonExecutable = PythonEnvironment.defaultPythonExecutablePath().toString();
+
+        Path scriptsDirectory = Paths.get("src","test","resources");
+
+        Assertions.assertThrows(IOException.class, () -> {
+            new PythonHost(pythonExecutable, scriptsDirectory.toFile(), "test.hello2");
+        });
     }
 }
