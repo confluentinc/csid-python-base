@@ -75,16 +75,12 @@ public class PythonHost {
     }
 
     private void ensurePemjaRequirement(List<String> pipRequirements) {
-        boolean found = false;
         for (String line: pipRequirements) {
             if (line.trim().startsWith(PEMJA_PREFIX)) {
-                found = true;
-                break;
+                return;
             }
         }
-        if (!found) {
-            pipRequirements.add(PEMJA_REQ_VERSION);
-        }
+        pipRequirements.add(PEMJA_REQ_VERSION);
     }
 
     /**
