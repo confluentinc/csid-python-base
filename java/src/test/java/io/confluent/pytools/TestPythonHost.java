@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class TestPythonHost {
     @SneakyThrows
     @Test
@@ -25,5 +27,8 @@ public class TestPythonHost {
 
         PythonHost host = new PythonHost(pythonExecutable, scriptsDirectory.toFile(), "test.hello");
         Assertions.assertNotNull(host);
+
+        Object res = host.callPythonMethod("hello");
+        assertEquals(res, "just now");
     }
 }

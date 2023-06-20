@@ -48,7 +48,7 @@ public class PythonHost {
             pipRequirements = Files.readAllLines(req.toPath(), StandardCharsets.UTF_8);
         }
 
-        // TODO make sure requirements contain pemja
+        // TODO make sure requirements contain pemja or add it explicitly
 
         // search for the file referenced in the entry point
         File[] pythonScripts = scriptsDirectory.listFiles((dir, name) -> name.endsWith(".py"));
@@ -66,7 +66,7 @@ public class PythonHost {
                 null, null, scriptsDirectory.toString());
 
         // now that the env is running, we call "import <importStatement>" to be ready to call the function
-
+        pythonEnv.executePythonStatement("import " + importStatement + " as guest");
     }
 
     /**
@@ -106,7 +106,7 @@ public class PythonHost {
     }
 
     public Object callPythonMethod(String methodName, Object... args) {
-        return pythonEnv.callPythonMethod(methodName, args);
+        return pythonEnv.callPythonMethod("guest." + methodName, args);
     }
 
 }
