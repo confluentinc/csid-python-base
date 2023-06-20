@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static java.nio.file.Files.readAllLines;
 
@@ -21,6 +22,7 @@ public class PythonHost {
     private String[] requirements;
 
     private String importStatement;
+    private String guestLibraryAlias;
     private String callableMethod;
 
     private PythonEnvironment pythonEnv;
@@ -66,7 +68,8 @@ public class PythonHost {
                 null, null, scriptsDirectory.toString());
 
         // now that the env is running, we call "import <importStatement>" to be ready to call the function
-        pythonEnv.executePythonStatement("import " + importStatement + " as guest");
+        guestLibraryAlias = "guest_" + UUID.randomUUID().toString().replace("-", "_");
+        pythonEnv.executePythonStatement("import " + importStatement + " as " + guestLibraryAlias);
     }
 
     /**
@@ -106,7 +109,7 @@ public class PythonHost {
     }
 
     public Object callPythonMethod(String methodName, Object... args) {
-        return pythonEnv.callPythonMethod("guest." + methodName, args);
+        return pythonEnv.callPythonMethod(guestLibraryAlias + "." + methodName, args);
     }
 
 }
