@@ -19,7 +19,8 @@ import static java.nio.file.Files.readAllLines;
 
 public class PythonHost {
 
-    private String[] requirements;
+    private final String PEMJA_PREFIX = "pemja";
+    private final String PEMJA_REQ_VERSION = "pemja==0.3.0";
 
     private String importStatement;
     private final String guestLibraryAlias;
@@ -51,6 +52,7 @@ public class PythonHost {
         }
 
         // TODO make sure requirements contain pemja or add it explicitly
+        ensurePemjaRequirement(pipRequirements);
 
         // search for the file referenced in the entry point
         File[] pythonScripts = scriptsDirectory.listFiles((dir, name) -> name.endsWith(".py"));
@@ -70,6 +72,19 @@ public class PythonHost {
         // now that the env is running, we call "import <importStatement>" to be ready to call the function
         guestLibraryAlias = "guest_" + UUID.randomUUID().toString().replace("-", "_");
         pythonEnv.executePythonStatement("import " + importStatement + " as " + guestLibraryAlias);
+    }
+
+    private void ensurePemjaRequirement(List<String> pipRequirements) {
+        boolean found = false;
+        for (String line: pipRequirements) {
+            if (line.trim().startsWith(PEMJA_PREFIX)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            pipRequirements.add(PEMJA_REQ_VERSION);
+        }
     }
 
     /**
