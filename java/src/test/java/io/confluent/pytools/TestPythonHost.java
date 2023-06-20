@@ -22,7 +22,7 @@ public class TestPythonHost {
         Path pythonScript = Paths.get("src","test","resources", "test.py");
         Assertions.assertTrue(Files.exists(pythonScript));
 
-        String pythonExecutable = PythonEnvironment.defaultPythonExecutablePath().toString();
+        String pythonExecutable = PyUtils.defaultPythonExecutablePath().toString();
 
         Path scriptsDirectory = Paths.get("src","test","resources");
 
@@ -48,7 +48,7 @@ public class TestPythonHost {
         Path pythonScript = Paths.get("src","test","resources", "adv1", "adv2.py");
         Assertions.assertTrue(Files.exists(pythonScript));
 
-        String pythonExecutable = PythonEnvironment.defaultPythonExecutablePath().toString();
+        String pythonExecutable = PyUtils.defaultPythonExecutablePath().toString();
 
         Path scriptsDirectory = Paths.get("src","test","resources");
 
@@ -69,7 +69,7 @@ public class TestPythonHost {
         Path pythonScript = Paths.get("src","test","resources", "test.py");
         Assertions.assertTrue(Files.exists(pythonScript));
 
-        String pythonExecutable = PythonEnvironment.defaultPythonExecutablePath().toString();
+        String pythonExecutable = PyUtils.defaultPythonExecutablePath().toString();
 
         Path scriptsDirectory = Paths.get("src","test","resources");
 

@@ -60,7 +60,7 @@ public class PythonEnvironment {
 
         Path finalPythonExecutablePath = pythonExecutablePath;
         if (finalPythonExecutablePath == null) {
-            finalPythonExecutablePath = defaultPythonExecutablePath();
+            finalPythonExecutablePath = PyUtils.defaultPythonExecutablePath();
         }
 
         // create venv
@@ -70,12 +70,12 @@ public class PythonEnvironment {
         }
         Path venvPath = Paths.get(workingDirectory.toString(), finalVenvName);
 
-        Path defaultSitePackages = Paths.get(getSitePackages(defaultPythonExecutablePath().toString()));
+        Path defaultSitePackages = Paths.get(PyUtils.getSitePackages(PyUtils.defaultPythonExecutablePath().toString()));
         paths.add(defaultSitePackages.toString());
         paths.add(defaultSitePackages.toString().replaceFirst("/lib/", "/lib64/"));
 
         Path venvPythonExecutablePath = createVirtualEnvironment(finalPythonExecutablePath, venvPath);
-        Path venvSitePackages = Paths.get(getSitePackages(venvPythonExecutablePath.toString()));
+        Path venvSitePackages = Paths.get(PyUtils.getSitePackages(venvPythonExecutablePath.toString()));
         paths.add(venvSitePackages.toString());
         paths.add(venvSitePackages.toString().replaceFirst("/lib/", "/lib64/"));
 
@@ -92,24 +92,8 @@ public class PythonEnvironment {
         return Paths.get(venvPath.toString(), "bin", "python");
     }
 
-    @SneakyThrows
-    public static Path defaultPythonExecutablePath() {
-        String cmdOutput = OperatingSystemProcess.execute(new String[]{"whereis", "python3"});
-        String[] items = cmdOutput.split(" ");
-        if (items.length < 2) {
-            throw new IOException("No default python3 instance found");
-        }
-        return Paths.get(items[1]);
-    }
-
-    private static final String GET_CURRENT_SITE_PACKAGES_PATH_SCRIPT = "import sysconfig; print(sysconfig.get_paths()[\"purelib\"])";
-    public static String getSitePackages(String pythonExecutablePath) {
-        return OperatingSystemProcess.execute(new String[]{
-                pythonExecutablePath, "-c", GET_CURRENT_SITE_PACKAGES_PATH_SCRIPT});
-    }
-
     private static void pipInstallRequirements(String pythonExecutable, String[] requirements, String localDependenciesDirectory) {
-        String sitePackagesPath = getSitePackages(pythonExecutable);
+        String sitePackagesPath = PyUtils.getSitePackages(pythonExecutable);
         HashMap<String, String> envVars = new HashMap<>();
         envVars.put("PYTHONPATH", sitePackagesPath);
 

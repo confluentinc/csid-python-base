@@ -42,7 +42,7 @@ class TestPythonEnvironment {
         String tmpDir = Files.createTempDirectory(null).toFile().getAbsolutePath();
         System.out.println("Temp Directory: " + tmpDir);
 
-        String defaultPythonPath = PythonEnvironment.defaultPythonExecutablePath().toString();
+        String defaultPythonPath = PyUtils.defaultPythonExecutablePath().toString();
 
         PythonEnvironment pyEnv = PythonEnvironment.build(
                 new String[]{"algorithms==0.1.4", "find-libpython==0.3.0", "pemja==0.3.0", "arrow"}, Paths.get(tmpDir),
@@ -53,7 +53,7 @@ class TestPythonEnvironment {
 
         Assertions.assertTrue(Files.exists(Paths.get(envPython)));
 
-        String sitePackages = PythonEnvironment.getSitePackages(envPython);
+        String sitePackages = PyUtils.getSitePackages(envPython);
         System.out.println("and site packages = " + sitePackages);
 
         Path pemjaLib = Paths.get(sitePackages, "pemja");
@@ -86,7 +86,7 @@ class TestPythonEnvironment {
         String tmpDir = Files.createTempDirectory(null).toFile().getAbsolutePath();
         System.out.println("Temp Directory: " + tmpDir);
 
-        String defaultPythonPath = PythonEnvironment.defaultPythonExecutablePath().toString();
+        String defaultPythonPath = PyUtils.defaultPythonExecutablePath().toString();
 
         PythonEnvironment pyEnv = PythonEnvironment.build(
                 new String[]{"algorithms==0.1.4", "find-libpython==0.3.0", "pemja==0.3.0"}, Paths.get(tmpDir),
@@ -97,7 +97,7 @@ class TestPythonEnvironment {
 
         Assertions.assertTrue(Files.exists(Paths.get(envPython)));
 
-        String sitePackages = PythonEnvironment.getSitePackages(envPython);
+        String sitePackages = PyUtils.getSitePackages(envPython);
         System.out.println("and site packages = " + sitePackages);
 
         Path pemjaLib = Paths.get(sitePackages, "pemja");
