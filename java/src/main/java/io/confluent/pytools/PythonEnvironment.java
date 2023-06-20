@@ -4,7 +4,6 @@ import lombok.SneakyThrows;
 import pemja.core.PythonInterpreter;
 import pemja.core.PythonInterpreterConfig;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -15,7 +14,8 @@ public class PythonEnvironment {
     private final PythonInterpreter interpreter;
 
     private final String pythonExePath;
-    public PythonEnvironment(String pythonExecutablePath, String[] paths) {
+    private final String virtualEnvironmentPath;
+    public PythonEnvironment(String pythonExecutablePath, String[] paths, String venvPath) {
         PythonInterpreterConfig config = PythonInterpreterConfig.newBuilder()
                 .setPythonExec(pythonExecutablePath)
                 .setExcType(PythonInterpreterConfig.ExecType.MULTI_THREAD)
@@ -23,6 +23,7 @@ public class PythonEnvironment {
                 .build();
 
         pythonExePath = pythonExecutablePath;
+        virtualEnvironmentPath = venvPath;
 
         interpreter = new PythonInterpreter(config);
     }
@@ -52,7 +53,7 @@ public class PythonEnvironment {
     public static PythonEnvironment build(String[] pipRequirements, Path workingDirectory,
                                           Path pythonExecutablePath, String venvName, String localDependenciesDirectory,
                                           String additionalPath) {
-        HashSet<String> paths = new HashSet<String>();
+        HashSet<String> paths = new HashSet<>();
 
         if (additionalPath != null) {
             paths.add(additionalPath);
@@ -79,11 +80,11 @@ public class PythonEnvironment {
         paths.add(venvSitePackages.toString());
         paths.add(venvSitePackages.toString().replaceFirst("/lib/", "/lib64/"));
 
-        // install pip reqs
+        // install pip requirements
         pipInstallRequirements(venvPythonExecutablePath.toString(), pipRequirements, localDependenciesDirectory);
 
         // returns new PythonEnvironment with the proper paths
-        return new PythonEnvironment(venvPythonExecutablePath.toString(), paths.toArray(String[]::new));
+        return new PythonEnvironment(venvPythonExecutablePath.toString(), paths.toArray(String[]::new), venvPath.toString());
     }
 
     @SneakyThrows
@@ -108,5 +109,9 @@ public class PythonEnvironment {
 
     public String getPythonExePath() {
         return pythonExePath;
+    }
+
+    public String getVirtualEnvironmentPath() {
+        return virtualEnvironmentPath;
     }
 }

@@ -28,7 +28,7 @@ public class PythonHost {
 
     private final PythonEnvironment pythonEnv;
 
-    public PythonHost(String pythonExecutable, File scriptsDirectory, String entryPoint) throws IOException {
+    public PythonHost(String pythonExecutable, File scriptsDirectory, String entryPoint, String workingDirectory) throws IOException {
         // explores the working directory to find requirements.txt
         // and build the PythonEnvironment
 
@@ -64,7 +64,6 @@ public class PythonHost {
         buildEntryPoint(entryPoint, scriptsDirectory);
 
         // build the python environment
-        String workingDirectory = "";
         pythonEnv = PythonEnvironment.build(pipRequirements.toArray(new String[0]),
                 Paths.get(workingDirectory), Paths.get(pythonExecutable),
                 null, null, scriptsDirectory.toString());
@@ -143,5 +142,9 @@ public class PythonHost {
 
     public Object callEntryPoint(Object... args) {
         return pythonEnv.callPythonMethod(guestLibraryAlias + "." + callableMethod, args);
+    }
+
+    public String venvPath() {
+        return pythonEnv.getVirtualEnvironmentPath();
     }
 }
