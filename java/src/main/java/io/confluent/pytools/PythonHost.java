@@ -122,8 +122,6 @@ public class PythonHost {
         }
     }
 
-
-
     public void executePythonStatement(String pythonStatement) {
         pythonEnv.executePythonStatement(pythonStatement);
     }
@@ -132,4 +130,7 @@ public class PythonHost {
         return pythonEnv.callPythonMethod(guestLibraryAlias + "." + methodName, args);
     }
 
+    public Object callEntryPoint(Object... args) {
+        return pythonEnv.callPythonMethod(guestLibraryAlias + "." + callableMethod, args);
+    }
 }

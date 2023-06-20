@@ -29,7 +29,12 @@ public class TestPythonHost {
         PythonHost host = new PythonHost(pythonExecutable, scriptsDirectory.toFile(), "test.hello");
         Assertions.assertNotNull(host);
 
+        host.executePythonStatement("from datetime import datetime as guest"); // should not fail or generate a collision
+
         Object res = host.callPythonMethod("hello");
+        assertEquals(res, "just now");
+
+        res = host.callEntryPoint();
         assertEquals(res, "just now");
     }
 
