@@ -28,7 +28,12 @@ public class PythonHost {
 
     private final PythonEnvironment pythonEnv;
 
+    // TODO move to a static build() pattern?
     public PythonHost(String pythonExecutable, File scriptsDirectory, String entryPoint, String workingDirectory) throws IOException {
+        this(pythonExecutable, scriptsDirectory, entryPoint, workingDirectory, null);
+    }
+
+    public PythonHost(String pythonExecutable, File scriptsDirectory, String entryPoint, String workingDirectory, String localDependenciesDirectory) throws IOException {
         // explores the working directory to find requirements.txt
         // and build the PythonEnvironment
 
@@ -51,7 +56,6 @@ public class PythonHost {
             pipRequirements = Files.readAllLines(req.toPath(), StandardCharsets.UTF_8);
         }
 
-        // TODO make sure requirements contain pemja or add it explicitly
         ensurePemjaRequirement(pipRequirements);
 
         // search for the file referenced in the entry point
@@ -66,11 +70,13 @@ public class PythonHost {
         // build the python environment
         pythonEnv = PythonEnvironment.build(pipRequirements.toArray(new String[0]),
                 Paths.get(workingDirectory), Paths.get(pythonExecutable),
-                null, null, scriptsDirectory.toString());
+                null, localDependenciesDirectory, scriptsDirectory.toString());
 
         // now that the env is running, we call "import <importStatement>" to be ready to call the function
         guestLibraryAlias = "guest_" + UUID.randomUUID().toString().replace("-", "_");
         pythonEnv.executePythonStatement("import " + importStatement + " as " + guestLibraryAlias);
+        //pythonEnv.executePythonStatement("print(dir(" + guestLibraryAlias + "))");
+
     }
 
     private void ensurePemjaRequirement(List<String> pipRequirements) {

@@ -15,14 +15,14 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kafkaconnect.version>3.4.0</kafkaconnect.version>
+        <kafkaconnect.version>3.4.1</kafkaconnect.version>
         <pemja.version>0.2.4</pemja.version>
         <sl4j.version>1.7.30</sl4j.version>
         <pcj.version>1.0.0</pcj.version>
         <rest.assured.version>5.3.0</rest.assured.version>
         <common.io.version>2.11.0</common.io.version>
         <jinjava.version>2.7.0</jinjava.version>
-        <kafka.compile.version>3.3.2</kafka.compile.version>
+        <kafka.compile.version>3.4.1</kafka.compile.version>
         <testcontainers.version>1.17.5</testcontainers.version>
         <junit.version>5.8.2</junit.version>
         <lombok.version>1.18.22</lombok.version>
@@ -53,6 +53,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${sl4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>connect-runtime</artifactId>
+            <version>3.4.1</version>
         </dependency>
         <dependency>
             <groupId>com.hubspot.jinjava</groupId>
@@ -104,7 +109,12 @@
             <version>${rest.assured.version}</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>4.2.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
