@@ -3,12 +3,16 @@ package io.confluent.pytools;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.common.protocol.types.Schema;
 import org.apache.kafka.connect.connector.ConnectRecord;
+import org.apache.kafka.connect.data.Field;
+import org.apache.kafka.connect.header.Header;
 import org.apache.kafka.connect.header.Headers;
 import org.apache.kafka.connect.transforms.Transformation;
 import org.apache.kafka.connect.transforms.util.SimpleConfig;
 
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.apache.kafka.common.config.ConfigDef.NO_DEFAULT_VALUE;
@@ -23,10 +27,10 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
     public static final String WORKING_DIR_FIELD = "working.dir";
     public static final String CONFIGURE_FIELD = "init.method";
 
-    // TODO get from the converter?
-    // JSON, String, Integer + other basic types?
-    public static final String KEY_FORMAT_FIELD = "key.format";
-    public static final String VALUE_FORMAT_FIELD = "value.format";
+    // transform entry point, same object/data is passed and returned
+    // "kafka_record" = KafkaRecord python object --> allows to modify topic, partition, headers, key and value
+    // "key_value" = Tuple(String) a tuple
+    public static final String IO_FORMAT_FIELD = "io.format";
 
     public static final String SETTINGS_FIELD = "private.settings";
 
@@ -68,44 +72,58 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
                     ConfigDef.Importance.HIGH,
                     "The name of the (python) init method. " +
                             "(Called once when the SMT initializes.)")
-            .define(KEY_FORMAT_FIELD, ConfigDef.Type.STRING,
-                    "", new ConfigDef.NonNullValidator(),
-                    ConfigDef.Importance.HIGH,
-                    "Key format (JSON, String, Integer) -- will change")
-            .define(VALUE_FORMAT_FIELD, ConfigDef.Type.STRING,
-                    "", new ConfigDef.NonNullValidator(),
-                    ConfigDef.Importance.HIGH,
-                    "Value format (JSON, String, Integer) -- will change")
             .define(SETTINGS_FIELD, ConfigDef.Type.STRING,
                     NO_DEFAULT_VALUE, new ConfigDef.NonNullValidator(),
                     ConfigDef.Importance.HIGH,
                     "A JSON string with private settings given to the init method.");
 
-    private String pythonExe;
-    private String scriptsDir;
-    private String workingDir;
-    private String entryPoint;
-    private String initMethod;
-    private String keyFormat;
-    private String valueFormat;
     private String jsonPrivateSettings;
 
     // private SchemaAndValue literalValue;
 
     private PythonHost pythonHost;
 
+    private Object toPython(R record) {
+        HashMap<String, String> obj = new HashMap<>();
+        obj.put("topic", record.topic());
+
+        obj.put("key_schema", record.keySchema().toString());
+        // should depend on the value schema: Schema.INT32_SCHEMA vs Schema.STRING_SCHEMA, etc
+        obj.put("key", record.key().toString());
+
+        obj.put("value_schema", record.valueSchema().toString());
+        // should depend on the value schema: Schema.INT32_SCHEMA vs Schema.STRING_SCHEMA, etc
+        obj.put("value", record.value().toString());
+
+        // obj.put("timestamp", record.timestamp().toString());
+        return obj;
+    }
+
+    private Object headersToPython(R record) {
+        HashMap<String, String> headers = new HashMap<>();
+        for (Header header: record.headers()) {
+            headers.put(header.key(), header.value().toString());
+        }
+        return headers;
+    }
+
+    private R fromPython(Object pythonResult, R record) {
+        HashMap<String, String> newRecordData = (HashMap<String, String>) pythonResult;
+
+        return record.newRecord(newRecordData.get("topic"), record.kafkaPartition(),
+                record.keySchema(), record.key(),
+                record.valueSchema(), newRecordData.get("value"),
+                record.timestamp());
+    }
+
     @Override
     public R apply(R record) {
-        log.info("transforming 1 record");
+        System.out.println("transforming 1 record");
 
-        Headers updatedHeaders = record.headers().duplicate();
-//        updatedHeaders.add(header, literalValue);
+        Object pyResult = pythonHost.callEntryPoint(toPython(record));
+        System.out.println("returned: " + pyResult.toString());
 
-        Object res = pythonHost.callEntryPoint(record.value());
-        log.info(res.toString());
-
-        return record.newRecord(record.topic(), record.kafkaPartition(), record.keySchema(), record.key(),
-                record.valueSchema(), record.value(), record.timestamp(), updatedHeaders);
+        return fromPython(pyResult, record);
     }
 
 
@@ -122,19 +140,18 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
     @Override
     @SneakyThrows
     public void configure(Map<String, ?> props) {
-        log.info("configuring SMT");
+        System.out.println("configuring SMT");
         final SimpleConfig config = new SimpleConfig(CONFIG_DEF, props);
 
-        pythonExe = config.getString(PYTHON_PATH_FIELD);
-        entryPoint = config.getString(ENTRY_POINT_FIELD);
-        scriptsDir = config.getString(SCRIPTS_DIR_FIELD);
-        workingDir = config.getString(WORKING_DIR_FIELD);
-        initMethod = config.getString(CONFIGURE_FIELD);
-        keyFormat = config.getString(KEY_FORMAT_FIELD);
-        valueFormat = config.getString(VALUE_FORMAT_FIELD);
+        String pythonExe = config.getString(PYTHON_PATH_FIELD);
+        String entryPoint = config.getString(ENTRY_POINT_FIELD);
+        String scriptsDir = config.getString(SCRIPTS_DIR_FIELD);
+        String workingDir = config.getString(WORKING_DIR_FIELD);
+        String initMethod = config.getString(CONFIGURE_FIELD);
+
         jsonPrivateSettings = config.getString(SETTINGS_FIELD);
 
-        log.info("initializing the python environment");
+        System.out.println("initializing the python environment");
 
         String pythonExecutable = PyUtils.defaultPythonExecutablePath().toString();
         if (!pythonExe.equals("")) {
@@ -151,7 +168,7 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
         // call a configure() function in python?
         if (!initMethod.equals("")) {
             pythonHost.callPythonMethod(initMethod, jsonPrivateSettings);
-            log.info("calling the init method: " + initMethod);
+            System.out.println("calling the init method: " + initMethod);
         }
     }
 }

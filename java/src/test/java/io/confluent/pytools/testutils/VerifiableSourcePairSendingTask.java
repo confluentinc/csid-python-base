@@ -102,7 +102,7 @@ public class VerifiableSourcePairSendingTask extends SourceTask {
     for (int i = 0; i < NUMBER_OF_EVENTS_TO_GENERATE; i++) {
       Map<String, Long> ccOffset = Collections.singletonMap(SEQNO_FIELD, seqno);
       SourceRecord srcRecord = new SourceRecord(partition, ccOffset, topic,
-          Schema.INT32_SCHEMA, id, Schema.INT64_SCHEMA, seqno);
+          Schema.INT32_SCHEMA, id, Schema.STRING_SCHEMA, "Value " + seqno);
       result.add(srcRecord);
       seqno++;
     }
