@@ -7,8 +7,8 @@ The interface from java to python is done using the pemja library (developed by 
 https://github.com/alibaba/pemja
 
 How pemja works:
-- Starts a thread with the main interpreter in the JVM
-- Calls python code using Java to C interface (JNI) and a C python module
+- It starts a thread for the python interpreter in the JVM
+- It calls python code using Java to C interface (JNI) and a C python module
 
 ## Python Tools (java) Classes
 
@@ -28,7 +28,7 @@ Step 1. Add the Python Tools jar to the `CLASSPATH`.
 
 Step 2. Put your python scripts, including an optional `requirements.txt` in a directory (the scripts directory).
 
-Step 2. Add the following properties to the connector you're adding the SMT to:
+Step 3. Add the following properties to the connector you're adding the SMT to:
 
 (full description of the properties later in this document)
 
@@ -46,14 +46,15 @@ Step 2. Add the following properties to the connector you're adding the SMT to:
 ### How it works
 
 👉 When initializing (during the `configure()` call of the java SMT SDK), the SMT builds a python virtual environment 
-and (pip) install the libraries referenced in the `requirements.txt` file. Then, it calls the init method of the 
-python script (if passed). It also install the `pemja` library in the venv.
+and (pip) installs the libraries referenced in the `requirements.txt` file. Then, it calls the `init()` method of the 
+python script (if configured). It also installs the `pemja` library in the virtual environment.
 
 For each call of the `apply()` call of the java SMT SDK (the method calling the transformation), it calls the `entry.point` 
 python method and passes a dict with the Kafka record (see next section).
 
 ### Python script and method signatures
 
+TODO
 
 ### Config properties
 
@@ -67,7 +68,7 @@ python method and passes a dict with the Kafka record (see next section).
 
 **Note on python entry points**
 
-The format for entry points is driven by the way pemja works and the organization of scripts inside the module. 
+The format for the python entry points is driven by the way pemja works and the organization of python scripts inside the user modules. 
 
 If the module doesn't have sub-modules, we'll import and call it this way:
 ```java
@@ -90,4 +91,5 @@ So the entry point should be provided as `algorithms.strings.decode_string` and 
 
 ### FAQ
 
-- How to install python requirements
+- How to provide packages for offline installation of the python environment? Put the wheel packages in a directory and provide it using `<transform.prefix>.offline.installation.dir`.
+- 
