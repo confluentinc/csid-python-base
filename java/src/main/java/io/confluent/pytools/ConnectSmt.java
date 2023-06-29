@@ -27,6 +27,8 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
     public static final String WORKING_DIR_FIELD = "working.dir";
     public static final String CONFIGURE_FIELD = "init.method";
 
+    public static final String OFFLINE_INSTALL_FIELD = "offline.installation.dir";
+
     // transform entry point, same object/data is passed and returned
     // "kafka_record" = KafkaRecord python object --> allows to modify topic, partition, headers, key and value
     // "key_value" = Tuple(String) a tuple
@@ -75,46 +77,15 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
             .define(SETTINGS_FIELD, ConfigDef.Type.STRING,
                     NO_DEFAULT_VALUE, new ConfigDef.NonNullValidator(),
                     ConfigDef.Importance.HIGH,
-                    "A JSON string with private settings given to the init method.");
+                    "A JSON string with private settings given to the init method.")
+            .define(OFFLINE_INSTALL_FIELD, ConfigDef.Type.STRING,
+                    "", new ConfigDef.NonNullValidator(),
+                    ConfigDef.Importance.HIGH,
+                    "The directory containing wheel/python packages for offline installation of " +
+                            "the packages in the virtual environment.");
 
     private String jsonPrivateSettings;
-
-    // private SchemaAndValue literalValue;
-
     private PythonHost pythonHost;
-
-    private Object toPython(R record) {
-        HashMap<String, String> obj = new HashMap<>();
-        obj.put("topic", record.topic());
-
-        obj.put("key_schema", record.keySchema().toString());
-        // should depend on the value schema: Schema.INT32_SCHEMA vs Schema.STRING_SCHEMA, etc
-        obj.put("key", record.key().toString());
-
-        obj.put("value_schema", record.valueSchema().toString());
-        // should depend on the value schema: Schema.INT32_SCHEMA vs Schema.STRING_SCHEMA, etc
-        obj.put("value", record.value().toString());
-
-        // obj.put("timestamp", record.timestamp().toString());
-        return obj;
-    }
-
-    private Object headersToPython(R record) {
-        HashMap<String, String> headers = new HashMap<>();
-        for (Header header: record.headers()) {
-            headers.put(header.key(), header.value().toString());
-        }
-        return headers;
-    }
-
-    private R fromPython(Object pythonResult, R record) {
-        HashMap<String, String> newRecordData = (HashMap<String, String>) pythonResult;
-
-        return record.newRecord(newRecordData.get("topic"), record.kafkaPartition(),
-                record.keySchema(), record.key(),
-                record.valueSchema(), newRecordData.get("value"),
-                record.timestamp());
-    }
 
     @Override
     public R apply(R record) {
@@ -126,7 +97,6 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
         return fromPython(pyResult, record);
     }
 
-
     @Override
     public ConfigDef config() {
         return CONFIG_DEF;
@@ -134,7 +104,7 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
 
     @Override
     public void close() {
-
+        // delete the workingDirectory (venv)?
     }
 
     @Override
@@ -148,6 +118,7 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
         String scriptsDir = config.getString(SCRIPTS_DIR_FIELD);
         String workingDir = config.getString(WORKING_DIR_FIELD);
         String initMethod = config.getString(CONFIGURE_FIELD);
+        String localDependenciesDir = config.getString(OFFLINE_INSTALL_FIELD);
 
         jsonPrivateSettings = config.getString(SETTINGS_FIELD);
 
@@ -163,7 +134,7 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
             workingDirectory = workingDir;
         }
 
-        pythonHost = new PythonHost(pythonExecutable, Paths.get(scriptsDir).toFile(), entryPoint, workingDirectory);
+        pythonHost = new PythonHost(pythonExecutable, Paths.get(scriptsDir).toFile(), entryPoint, workingDirectory, localDependenciesDir);
 
         // call a configure() function in python?
         if (!initMethod.equals("")) {
@@ -171,4 +142,38 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
             System.out.println("calling the init method: " + initMethod);
         }
     }
+
+    public Object toPython(R record) {
+        HashMap<String, Object> obj = new HashMap<>();
+        obj.put("topic", record.topic());
+
+        obj.put("key_schema", record.keySchema().toString());
+        obj.put("key", record.key().toString());
+
+        obj.put("value_schema", record.valueSchema().toString());
+        obj.put("value", record.value().toString());
+
+        return obj;
+    }
+
+    public Object headersToPython(R record) {
+        HashMap<String, String> headers = new HashMap<>();
+        for (Header header: record.headers()) {
+            headers.put(header.key(), header.value().toString());
+        }
+        return headers;
+    }
+
+    public R fromPython(Object pythonResult, R record) {
+        HashMap<String, String> newRecordData = (HashMap<String, String>) pythonResult;
+
+        // the python script cannot/shouldn't change the type of the key or value
+        return record.newRecord(newRecordData.get("topic"), record.kafkaPartition(),
+                record.keySchema(), PyJavaIO.matchingParse(record.keySchema(), newRecordData.get("key")),
+                record.valueSchema(), PyJavaIO.matchingParse(record.valueSchema(), newRecordData.get("value")),
+                record.timestamp());
+    }
+
+
+
 }

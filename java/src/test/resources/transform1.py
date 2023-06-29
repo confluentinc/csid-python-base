@@ -1,5 +1,5 @@
 def init(settings):
-    print("tranform init() in python")
+    print("transform init() in python")
     print(settings)
 
 def transform(record):
@@ -7,5 +7,6 @@ def transform(record):
     print(f"received: {record}")
 
     record['value'] = f"Modified from python --> {record['value']}"
+    record['key'] = 999
 
     return record

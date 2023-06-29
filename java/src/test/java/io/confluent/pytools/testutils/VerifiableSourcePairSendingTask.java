@@ -127,7 +127,7 @@ public class VerifiableSourcePairSendingTask extends SourceTask {
     } catch (JsonProcessingException e) {
       dataJson = "Bad data can't be written as json: " + e.getMessage();
     }
-    System.out.println(dataJson);
+    // System.out.println(dataJson);
   }
 
   @Override
