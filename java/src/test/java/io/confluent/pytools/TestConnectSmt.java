@@ -79,4 +79,39 @@ public class TestConnectSmt {
 
         connectStandalone.stop();
     }
+
+    private Properties getTransformPropertiesJSON() {
+        Properties props = new Properties();
+
+        props.put("transforms", "myTransform");
+        props.put("transforms.myTransform.type", ConnectSmt.class.getName()); // io.confluent.pytools.ConnectSmt
+
+        Path scriptsDirectory = Paths.get("src","test", "resources");
+        props.put("transforms.myTransform.scripts.dir", scriptsDirectory.toString());
+
+        props.put("transforms.myTransform.working.dir", tempDir.toString());
+
+        props.put("transforms.myTransform.init.method", "init");
+        props.put("transforms.myTransform.entry.point", "transform1.transform_json");
+        props.put("transforms.myTransform.private.settings", "{\"conf1\":\"value1\", \"conf2\":\"value2\"}");
+
+        return props;
+    }
+
+    @SneakyThrows
+    @Test
+    void withSourceTaskJSON() {
+
+        ConnectStandalone connectStandalone = new ConnectStandalone(
+                commonTestUtils.getConnectWorkerProperties(),
+                commonTestUtils.getSourceTaskProperties(
+                        getTransformPropertiesJSON(), testTopic,
+                        VerifiableSourceConnector.class));
+        connectStandalone.start();
+
+        commonTestUtils.consumeAtLeastXEvents(StringDeserializer.class, StringDeserializer.class,
+                testTopic, 1);
+
+        connectStandalone.stop();
+    }
 }

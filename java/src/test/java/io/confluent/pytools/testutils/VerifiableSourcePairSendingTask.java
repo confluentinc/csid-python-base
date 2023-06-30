@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import lombok.SneakyThrows;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.errors.ConnectException;
@@ -89,6 +91,7 @@ public class VerifiableSourcePairSendingTask extends SourceTask {
    * calls returns empty result list to reduce unnecessary trace / span noise in tests.
    */
   @Override
+  @SneakyThrows
   public List<SourceRecord> poll() throws InterruptedException {
     long sendStartMs = System.currentTimeMillis();
     if (throttler.shouldThrottle(seqno - startingSeqno, sendStartMs)) {
@@ -101,8 +104,17 @@ public class VerifiableSourcePairSendingTask extends SourceTask {
     }
     for (int i = 0; i < NUMBER_OF_EVENTS_TO_GENERATE; i++) {
       Map<String, Long> ccOffset = Collections.singletonMap(SEQNO_FIELD, seqno);
+
+      Map<String, Object> data = new HashMap<>();
+      data.put("some_string", "blah");
+      data.put("time_ms", System.currentTimeMillis());
+      data.put("seqno", seqno);
+      data.put("some_bool", true);
+
+      String dataJson = JSON_SERDE.writeValueAsString(data);
+
       SourceRecord srcRecord = new SourceRecord(partition, ccOffset, topic,
-          Schema.INT32_SCHEMA, id, Schema.STRING_SCHEMA, "Value " + seqno);
+          Schema.INT32_SCHEMA, id, Schema.STRING_SCHEMA, dataJson);
       result.add(srcRecord);
       seqno++;
     }
