@@ -38,10 +38,12 @@ public class TestConnectSmt {
         testTopic = "test-topic-" + UUID.randomUUID();
         commonTestUtils = new CommonTestUtils(tempDir.getAbsolutePath());
         commonTestUtils.startKafkaContainer();
+        commonTestUtils.startSchemaRegistryContainer(commonTestUtils.getKafkaContainer());
     }
 
     @AfterEach
     void cleanup() {
+        commonTestUtils.stopSchemaRegistryContainer();
         commonTestUtils.stopKafkaContainer();
     }
 
@@ -103,7 +105,7 @@ public class TestConnectSmt {
     void withSourceTaskJSON() {
 
         ConnectStandalone connectStandalone = new ConnectStandalone(
-                commonTestUtils.getConnectWorkerProperties(),
+                commonTestUtils.getJSONSchemaWorkerProperties(),
                 commonTestUtils.getSourceTaskProperties(
                         getTransformPropertiesJSON(), testTopic,
                         VerifiableSourceConnector.class));

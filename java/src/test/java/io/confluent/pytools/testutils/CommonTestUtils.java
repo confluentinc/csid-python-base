@@ -51,6 +51,7 @@ import org.apache.kafka.connect.tools.VerifiableSinkTask;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
+import io.confluent.connect.json.JsonSchemaConverter;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -66,6 +67,7 @@ public class CommonTestUtils {
 
   private String kafkaBootstrapServers = "dummy";
   private KafkaContainer kafkaContainer;
+  private SchemaRegistryContainer schemaRegistryContainer;
 
   public void startKafkaContainer() {
     if (kafkaContainer == null) {
@@ -88,6 +90,26 @@ public class CommonTestUtils {
     }
   }
 
+  public KafkaContainer getKafkaContainer() {
+    return kafkaContainer;
+  }
+
+  public void startSchemaRegistryContainer(KafkaContainer kafka) {
+    schemaRegistryContainer = new SchemaRegistryContainer(
+            DockerImageName.parse("confluentinc/cp-schema-registry:" + KAFKA_CONTAINER_VERSION))
+            .withNetwork(DOCKER_NETWORK)
+            .withNetworkAliases("schema-registry")
+            .withKafka(kafka)
+            .dependsOn(kafka);
+    schemaRegistryContainer.start();
+  }
+
+  public void stopSchemaRegistryContainer() {
+    if (schemaRegistryContainer != null) {
+      schemaRegistryContainer.stop();
+    }
+  }
+
   public Properties getConnectWorkerProperties() {
     Properties props = new Properties();
     props.put(WorkerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers);
@@ -96,6 +118,19 @@ public class CommonTestUtils {
     props.put(WorkerConfig.HEADER_CONVERTER_CLASS_CONFIG, StringConverter.class.getName());
     props.put(StandaloneConfig.OFFSET_STORAGE_FILE_FILENAME_CONFIG,
         createTempFile(tempDir).getAbsolutePath());
+    props.put("value.converter.schema.registry.url", "http://schema-registry:8081");
+    return props;
+  }
+
+  public Properties getJSONSchemaWorkerProperties() {
+    Properties props = new Properties();
+    props.put(WorkerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers);
+    props.put(WorkerConfig.KEY_CONVERTER_CLASS_CONFIG, JsonConverter.class.getName());
+    props.put(WorkerConfig.VALUE_CONVERTER_CLASS_CONFIG, StringConverter.class.getName()); // JsonSchemaConverter
+    props.put(WorkerConfig.HEADER_CONVERTER_CLASS_CONFIG, StringConverter.class.getName());
+    props.put(StandaloneConfig.OFFSET_STORAGE_FILE_FILENAME_CONFIG,
+            createTempFile(tempDir).getAbsolutePath());
+    props.put("value.converter.schema.registry.url", "http://schema-registry:8081");
     return props;
   }
 

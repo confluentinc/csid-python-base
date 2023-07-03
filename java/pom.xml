@@ -26,9 +26,16 @@
         <testcontainers.version>1.17.5</testcontainers.version>
         <junit.version>5.8.2</junit.version>
         <lombok.version>1.18.22</lombok.version>
+        <confluentconnect.version>7.2.0</confluentconnect.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-connect-json-schema-converter</artifactId>
+            <version>${confluentconnect.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>connect-api</artifactId>
