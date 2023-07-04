@@ -126,7 +126,7 @@ public class CommonTestUtils {
     Properties props = new Properties();
     props.put(WorkerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers);
     props.put(WorkerConfig.KEY_CONVERTER_CLASS_CONFIG, JsonConverter.class.getName());
-    props.put(WorkerConfig.VALUE_CONVERTER_CLASS_CONFIG, StringConverter.class.getName()); // JsonSchemaConverter
+    props.put(WorkerConfig.VALUE_CONVERTER_CLASS_CONFIG, JsonSchemaConverter.class.getName()); // StringConverter or JsonSchemaConverter
     props.put(WorkerConfig.HEADER_CONVERTER_CLASS_CONFIG, StringConverter.class.getName());
     props.put(StandaloneConfig.OFFSET_STORAGE_FILE_FILENAME_CONFIG,
             createTempFile(tempDir).getAbsolutePath());

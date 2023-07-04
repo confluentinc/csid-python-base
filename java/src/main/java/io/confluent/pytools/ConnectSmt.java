@@ -1,5 +1,7 @@
 package io.confluent.pytools;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.config.ConfigDef;
@@ -12,6 +14,7 @@ import org.apache.kafka.connect.transforms.Transformation;
 import org.apache.kafka.connect.transforms.util.SimpleConfig;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -92,9 +95,12 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
         System.out.println("transforming 1 record");
 
         Object pyResult = pythonHost.callEntryPoint(toPython(record));
-        System.out.println("returned: " + pyResult.toString());
+        System.out.println("returned by python: " + pyResult.toString());
 
-        return fromPython(pyResult, record);
+        R newRecord = fromPython(pyResult, record);
+        System.out.println("after conversion fromPython: " + newRecord.toString());
+
+        return newRecord;
     }
 
     @Override
@@ -143,15 +149,41 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
         }
     }
 
+    @SneakyThrows
+    public String payloadString(Object payload, String schema) {
+        // if the schema is a Struct, we pass the payload as a JSON String
+        // otherwise if it's a basic type, we pass the toString()
+        if (schema.contains("STRUCT")) {
+            String strVal = payload.toString();
+            // quick and dirty Struct to JSON =
+            // 1. remove Struct prefix
+            // 2. put everything in quotes
+            // 3. replace = with :
+            strVal = strVal.substring(7, strVal.length()-1);
+            ArrayList<String> resultItems = new ArrayList<>();
+            String[] items = strVal.split(",");
+            for (String item: items) {
+                String[] keyVals = item.split("=");
+                StringBuilder itemString = new StringBuilder("");
+                itemString.append("\"").append(keyVals[0]).append("\":\"").append(keyVals[1]).append("\"");
+                resultItems.add(itemString.toString());
+            }
+            String itemsJoined = String.join(",", resultItems);
+            return "{" + itemsJoined + "}";
+        } else {
+            return payload.toString();
+        }
+    }
+
     public Object toPython(R record) {
         HashMap<String, Object> obj = new HashMap<>();
         obj.put("topic", record.topic());
 
         obj.put("key_schema", record.keySchema().toString());
-        obj.put("key", record.key().toString());
+        obj.put("key", payloadString(record.key(), record.keySchema().toString()));
 
         obj.put("value_schema", record.valueSchema().toString());
-        obj.put("value", record.value().toString());
+        obj.put("value", payloadString(record.value(), record.valueSchema().toString()));
 
         return obj;
     }

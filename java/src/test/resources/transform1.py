@@ -5,23 +5,31 @@ def init(settings):
     print(settings)
 
 def transform(record):
-    print("transform entry point in python")
-    print(f"received: {record}")
+    try:
+        print("transform entry point in python")
+        print(f"received: {record}")
 
-    record['value'] = f"Modified from python --> {record['value']}"
-    record['key'] = 999
+        record['value'] = f"Modified from python --> {record['value']}"
+        record['key'] = 999
+    except Exception as e:
+        print("An exception occured:")
+        print(e)
 
     return record
 
 def transform_json(record):
-    print("transform entry point in python")
-    print(f"received: {record}")
+    try:
+        print("transform entry point in python")
+        print(f"received: {record}")
 
-    json_obj = json.loads(record['value'])
-    print(json_obj)
+        json_obj = json.loads(record['value'])
+        print(json_obj)
 
-    json_obj['some_string'] = f"Modified from python --> {json_obj['some_string']}"
-    record['value'] = json.dumps(json_obj)
-    record['key'] = 999
+        json_obj['first_name'] = f"Modified from python --> {json_obj['first_name']}"
+        record['value'] = json.dumps(json_obj)
+        record['key'] = 999
+    except Exception as e:
+        print("An exception occured:")
+        print(e)
 
     return record

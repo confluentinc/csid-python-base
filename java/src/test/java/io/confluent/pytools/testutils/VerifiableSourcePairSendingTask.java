@@ -14,6 +14,8 @@ import java.util.Map;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.SchemaBuilder;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
@@ -98,39 +100,34 @@ public class VerifiableSourcePairSendingTask extends SourceTask {
       throttler.throttle();
     }
     List<SourceRecord> result = new ArrayList<>();
-    //Only ever send 2 messages - helps with test stability
+    // Only ever send 2 messages - helps with test stability
     if (sent) {
       return result;
     }
     for (int i = 0; i < NUMBER_OF_EVENTS_TO_GENERATE; i++) {
       Map<String, Long> ccOffset = Collections.singletonMap(SEQNO_FIELD, seqno);
 
-      Map<String, Object> data = new HashMap<>();
-      data.put("some_string", "blah");
-      data.put("time_ms", System.currentTimeMillis());
-      data.put("seqno", seqno);
-      data.put("some_bool", true);
-
-      String dataJson = JSON_SERDE.writeValueAsString(data);
-
       SourceRecord srcRecord = new SourceRecord(partition, ccOffset, topic,
-          Schema.INT32_SCHEMA, id, Schema.STRING_SCHEMA, dataJson);
+              Schema.INT32_SCHEMA, id, Schema.STRING_SCHEMA, "Value " + seqno);
       result.add(srcRecord);
       seqno++;
     }
     sent = true;
+    System.out.println("poll()");
+    System.out.println(result);
     return result;
   }
 
   @Override
   public void commitRecord(SourceRecord record, RecordMetadata metadata)
       throws InterruptedException {
+
     Map<String, Object> data = new HashMap<>();
     data.put("name", name);
     data.put("task", id);
     data.put("topic", this.topic);
     data.put("time_ms", System.currentTimeMillis());
-    data.put("seqno", record.value());
+    data.put("value", record.value());
     data.put("committed", true);
 
     String dataJson;
@@ -139,7 +136,8 @@ public class VerifiableSourcePairSendingTask extends SourceTask {
     } catch (JsonProcessingException e) {
       dataJson = "Bad data can't be written as json: " + e.getMessage();
     }
-    // System.out.println(dataJson);
+    System.out.println("commitRecord()");
+    System.out.println(dataJson);
   }
 
   @Override
@@ -147,3 +145,4 @@ public class VerifiableSourcePairSendingTask extends SourceTask {
     throttler.wakeup();
   }
 }
+

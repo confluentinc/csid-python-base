@@ -2,6 +2,7 @@ package io.confluent.pytools;
 
 import io.confluent.pytools.testutils.CommonTestUtils;
 import io.confluent.pytools.testutils.ConnectStandalone;
+import io.confluent.pytools.testutils.VerifiableSourceConnectorJSON;
 import lombok.SneakyThrows;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.AfterEach;
@@ -108,7 +109,7 @@ public class TestConnectSmt {
                 commonTestUtils.getJSONSchemaWorkerProperties(),
                 commonTestUtils.getSourceTaskProperties(
                         getTransformPropertiesJSON(), testTopic,
-                        VerifiableSourceConnector.class));
+                        VerifiableSourceConnectorJSON.class));
         connectStandalone.start();
 
         commonTestUtils.consumeAtLeastXEvents(StringDeserializer.class, StringDeserializer.class,
