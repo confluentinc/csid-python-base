@@ -4,11 +4,10 @@ import io.confluent.pytools.testutils.CommonTestUtils;
 import io.confluent.pytools.testutils.ConnectStandalone;
 import io.confluent.pytools.testutils.VerifiableSourceConnectorJSON;
 import lombok.SneakyThrows;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
@@ -77,8 +77,10 @@ public class TestConnectSmt {
                         VerifiableSourceConnector.class));
         connectStandalone.start();
 
-        commonTestUtils.consumeAtLeastXEvents(StringDeserializer.class, StringDeserializer.class,
+        List<ConsumerRecord> records = commonTestUtils.consumeAtLeastXEvents(StringDeserializer.class, StringDeserializer.class,
                 testTopic, 1);
+
+        Assertions.assertTrue(records.get(0).value().toString().contains("Modified from python --> Value 0"));
 
         connectStandalone.stop();
     }
