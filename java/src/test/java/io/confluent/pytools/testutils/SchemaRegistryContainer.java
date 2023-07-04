@@ -16,7 +16,7 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
     public SchemaRegistryContainer(final DockerImageName dockerImageName) {
         super(dockerImageName);
         addEnv("SCHEMA_REGISTRY_HOST_NAME", "localhost");
-        withExposedPorts(PORT);
+        addFixedExposedPort(PORT, PORT);
     }
 
     public SchemaRegistryContainer withKafka(final KafkaContainer kafka) {

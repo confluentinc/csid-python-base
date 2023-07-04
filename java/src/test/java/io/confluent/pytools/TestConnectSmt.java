@@ -114,8 +114,11 @@ public class TestConnectSmt {
                         VerifiableSourceConnectorJSON.class));
         connectStandalone.start();
 
-        commonTestUtils.consumeAtLeastXEvents(StringDeserializer.class, StringDeserializer.class,
+        List<ConsumerRecord> records = commonTestUtils.consumeAtLeastXEvents(StringDeserializer.class,
+                StringDeserializer.class,
                 testTopic, 1);
+
+        Assertions.assertTrue(records.get(0).value().toString().contains("Modified from python"));
 
         connectStandalone.stop();
     }

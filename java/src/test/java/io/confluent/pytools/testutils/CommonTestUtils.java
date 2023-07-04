@@ -118,7 +118,6 @@ public class CommonTestUtils {
     props.put(WorkerConfig.HEADER_CONVERTER_CLASS_CONFIG, StringConverter.class.getName());
     props.put(StandaloneConfig.OFFSET_STORAGE_FILE_FILENAME_CONFIG,
         createTempFile(tempDir).getAbsolutePath());
-    props.put("value.converter.schema.registry.url", "http://schema-registry:8081");
     return props;
   }
 
@@ -130,7 +129,7 @@ public class CommonTestUtils {
     props.put(WorkerConfig.HEADER_CONVERTER_CLASS_CONFIG, StringConverter.class.getName());
     props.put(StandaloneConfig.OFFSET_STORAGE_FILE_FILENAME_CONFIG,
             createTempFile(tempDir).getAbsolutePath());
-    props.put("value.converter.schema.registry.url", "http://schema-registry:8081");
+    props.put("value.converter.schema.registry.url", "http://localhost:8081");
     return props;
   }
 

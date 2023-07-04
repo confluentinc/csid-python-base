@@ -107,19 +107,19 @@ public class VerifiableSourcePairSendingTaskJSON extends SourceTask {
         for (int i = 0; i < NUMBER_OF_EVENTS_TO_GENERATE; i++) {
             Map<String, Long> ccOffset = Collections.singletonMap(SEQNO_FIELD, seqno);
 
-            Schema recSchema = SchemaBuilder.struct().name("User")
-                    .field("first_name", Schema.STRING_SCHEMA)
-                    .field("last_name", Schema.STRING_SCHEMA)
-                    .field("age", Schema.INT32_SCHEMA)
-                    .build();
+            Schema valueSchema = SchemaBuilder.struct().name("record")
+                .field("first_name", Schema.STRING_SCHEMA)
+                .field("last_name", Schema.STRING_SCHEMA)
+                .field("age", Schema.INT32_SCHEMA)
+                .build();
 
-            Struct rec = new Struct(recSchema);
-            rec.put("first_name", "John");
-            rec.put("last_name", "Doe");
-            rec.put("age", 25);
+            Struct recordValue = new Struct(valueSchema)
+                .put("first_name", "John")
+                .put("last_name", "Doe")
+                .put("age", 25);
 
             SourceRecord srcRecord = new SourceRecord(partition, ccOffset, topic,
-                    Schema.INT32_SCHEMA, id, rec.schema(), rec);
+                    Schema.INT32_SCHEMA, id, valueSchema, recordValue);
             result.add(srcRecord);
             seqno++;
         }
@@ -138,7 +138,7 @@ public class VerifiableSourcePairSendingTaskJSON extends SourceTask {
         data.put("task", id);
         data.put("topic", this.topic);
         data.put("time_ms", System.currentTimeMillis());
-        data.put("value", record.value());
+        data.put("value", record.value().toString());
         data.put("committed", true);
 
         String dataJson;
@@ -148,7 +148,6 @@ public class VerifiableSourcePairSendingTaskJSON extends SourceTask {
             dataJson = "Bad data can't be written as json: " + e.getMessage();
         }
         System.out.println("commitRecord()");
-        System.out.println(dataJson);
     }
 
     @Override
