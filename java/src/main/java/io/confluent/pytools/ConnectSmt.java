@@ -169,13 +169,22 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
         return headers;
     }
 
-    public R fromPython(Object pythonResult, R record) {
-        HashMap<String, String> newRecordData = (HashMap<String, String>) pythonResult;
+    public R fromPython(Object pythonResult, R originalRecord) {
+        try {
+            HashMap<String, String> newRecordData = (HashMap<String, String>) pythonResult;
 
-        // the python script cannot/shouldn't change the type of the key or value
-        return record.newRecord(newRecordData.get("topic"), record.kafkaPartition(),
-                record.keySchema(), PyJavaIO.matchingParse(record.keySchema(), newRecordData.get("key")),
-                record.valueSchema(), PyJavaIO.matchingParse(record.valueSchema(), newRecordData.get("value")),
-                record.timestamp());
+            // the python script cannot/shouldn't change the type of the key or value
+            return originalRecord.newRecord(
+                    newRecordData.get("topic"),
+                    originalRecord.kafkaPartition(),
+                    originalRecord.keySchema(),
+                    PyJavaIO.matchingParse(originalRecord.keySchema(), newRecordData.get("key")),
+                    originalRecord.valueSchema(),
+                    PyJavaIO.matchingParse(originalRecord.valueSchema(), newRecordData.get("value")),
+                    originalRecord.timestamp());
+        } catch (Exception e) {
+            System.out.println("Error processing returned value from python: " + e);
+            return originalRecord;
+        }
     }
 }

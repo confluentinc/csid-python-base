@@ -117,7 +117,8 @@ So the entry point should be provided as `algorithms.strings.decode_string` and 
 
 
 
-### FAQ
+### Notes/FAQ
 
 - How to provide packages for offline installation of the python environment? Put the wheel packages in a directory and provide it using `<transform.prefix>.offline.installation.dir`.
+- The python script cannot/shouldn't change the type of the key or of the value.
 - 
