@@ -54,7 +54,35 @@ python method and passes a dict with the Kafka record (see next section).
 
 ### Python script and method signatures
 
-TODO
+For transforms chained to source connectors, the python method called for the transform has the following signature:
+
+`def transform(record)`
+
+The format for `record` has 5 fields:
+
+- topic: the name of the destination topic (can be modified by the transform)
+- key_schema: the type of the key payload
+- key: the key payload
+- value_schema: the type of the value payload
+- value: the value payload
+
+Depending on their type, the payload format for keys and values varies: 
+- When the payload is of a basic type (`string`, `integer`, `float`, `boolean`), it is passed as is (see below `key_schema` and `key`). 
+- When the payload is a `JSON`, it is passed as a JSON object in a string (see below `value_schema` and `value`).
+
+```json
+{
+  'topic': 'test-topic-641068b3-2a33-43d1-a5cb-9325a38ae5f7',
+  'key_schema': 'INT32',
+  'key': 0,
+  'value_schema': 'JSON',
+  'value': '{"first_name":"John","last_name":"Doe","age":"25"}'
+}
+```
+
+### Filtering out a message
+
+To filter out a message, the python transform can return `None`.
 
 ### Config properties
 

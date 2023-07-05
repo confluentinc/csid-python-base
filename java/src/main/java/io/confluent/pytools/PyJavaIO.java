@@ -1,5 +1,6 @@
 package io.confluent.pytools;
 
+import lombok.SneakyThrows;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.connector.ConnectRecord;
@@ -9,6 +10,7 @@ import org.apache.kafka.connect.header.Header;
 import org.apache.kafka.connect.header.Headers;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class PyJavaIO {
@@ -40,6 +42,40 @@ public class PyJavaIO {
             default:
                 return itemData;
         }
+    }
+    @SneakyThrows
+    static Object payloadTyped(Object payload, String schema) {
+        // if the schema is a Struct, we pass the payload as a JSON String
+        // otherwise if it's a basic type, we pass the toString()
+        if (schema.contains("STRUCT")) {
+            String strVal = payload.toString();
+            // quick and dirty Struct to JSON =
+            // 1. remove Struct prefix
+            // 2. put everything in quotes
+            // 3. replace = with :
+            strVal = strVal.substring(7, strVal.length()-1);
+            ArrayList<String> resultItems = new ArrayList<>();
+            String[] items = strVal.split(",");
+            for (String item: items) {
+                String[] keyVals = item.split("=");
+                StringBuilder itemString = new StringBuilder("");
+                itemString.append("\"").append(keyVals[0]).append("\":\"").append(keyVals[1]).append("\"");
+                resultItems.add(itemString.toString());
+            }
+            String itemsJoined = String.join(",", resultItems);
+            return "{" + itemsJoined + "}";
+        } else {
+            return payload;
+        }
+    }
+
+    static String normalizedTypeName(Schema schema) {
+        return schema.toString()
+                .replace("}", "")
+                .replace("{", "")
+                .replaceFirst("record:", "")
+                .replaceFirst("Schema", "")
+                .replaceFirst("STRUCT", "JSON");
     }
 
 }

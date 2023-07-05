@@ -33,3 +33,8 @@ def transform_json(record):
         print(e)
 
     return record
+
+def drop_messages(record):
+    print("transform entry point in python")
+    print(f"received: {record}")
+    return None
