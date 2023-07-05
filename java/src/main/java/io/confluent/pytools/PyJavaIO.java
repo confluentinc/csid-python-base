@@ -1,17 +1,12 @@
 package io.confluent.pytools;
 
 import lombok.SneakyThrows;
-import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.data.Schema;
-import org.apache.kafka.connect.connector.ConnectRecord;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Struct;
-import org.apache.kafka.connect.header.Header;
-import org.apache.kafka.connect.header.Headers;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class PyJavaIO {
 
@@ -19,12 +14,12 @@ public class PyJavaIO {
         Struct rec = new Struct(itemSchema);
         JSONObject jo = new JSONObject(jsonString);
         for (Field field: rec.schema().fields()) {
-            rec.put(field.name(), matchingParse(field.schema(), jo.get(field.name())));
+            rec.put(field.name(), typedParse(field.schema(), jo.get(field.name())));
         }
         return rec;
     }
 
-    static Object matchingParse(Schema itemSchema, Object itemData) {
+    static Object typedParse(Schema itemSchema, Object itemData) {
         switch (itemSchema.type()) {
             case INT8:
             case INT16:
@@ -43,27 +38,30 @@ public class PyJavaIO {
                 return itemData;
         }
     }
+
+    static String structToJSON(Object payload) {
+        String strVal = payload.toString();
+        // quick and dirty Struct to JSON =
+        // 1. remove Struct prefix
+        // 2. put everything in quotes
+        // 3. replace = with :
+        strVal = strVal.substring(7, strVal.length()-1);
+        ArrayList<String> resultItems = new ArrayList<>();
+        String[] items = strVal.split(",");
+        for (String item: items) {
+            String[] keyVals = item.split("=");
+            resultItems.add("\"" + keyVals[0] + "\":\"" + keyVals[1] + "\""); // TODO check array boundaries
+        }
+        String itemsJoined = String.join(",", resultItems);
+        return "{" + itemsJoined + "}";
+    }
+
     @SneakyThrows
     static Object payloadTyped(Object payload, String schema) {
         // if the schema is a Struct, we pass the payload as a JSON String
         // otherwise if it's a basic type, we pass the toString()
         if (schema.contains("STRUCT")) {
-            String strVal = payload.toString();
-            // quick and dirty Struct to JSON =
-            // 1. remove Struct prefix
-            // 2. put everything in quotes
-            // 3. replace = with :
-            strVal = strVal.substring(7, strVal.length()-1);
-            ArrayList<String> resultItems = new ArrayList<>();
-            String[] items = strVal.split(",");
-            for (String item: items) {
-                String[] keyVals = item.split("=");
-                StringBuilder itemString = new StringBuilder("");
-                itemString.append("\"").append(keyVals[0]).append("\":\"").append(keyVals[1]).append("\"");
-                resultItems.add(itemString.toString());
-            }
-            String itemsJoined = String.join(",", resultItems);
-            return "{" + itemsJoined + "}";
+            return structToJSON(payload);
         } else {
             return payload;
         }

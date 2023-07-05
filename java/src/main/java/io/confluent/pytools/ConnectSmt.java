@@ -9,7 +9,6 @@ import org.apache.kafka.connect.transforms.Transformation;
 import org.apache.kafka.connect.transforms.util.SimpleConfig;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -178,9 +177,9 @@ public class ConnectSmt<R extends ConnectRecord<R>> implements Transformation<R>
                     newRecordData.get("topic"),
                     originalRecord.kafkaPartition(),
                     originalRecord.keySchema(),
-                    PyJavaIO.matchingParse(originalRecord.keySchema(), newRecordData.get("key")),
+                    PyJavaIO.typedParse(originalRecord.keySchema(), newRecordData.get("key")),
                     originalRecord.valueSchema(),
-                    PyJavaIO.matchingParse(originalRecord.valueSchema(), newRecordData.get("value")),
+                    PyJavaIO.typedParse(originalRecord.valueSchema(), newRecordData.get("value")),
                     originalRecord.timestamp());
         } catch (Exception e) {
             System.out.println("Error processing returned value from python: " + e);
