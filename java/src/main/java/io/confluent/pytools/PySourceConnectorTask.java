@@ -90,15 +90,6 @@ public class PySourceConnectorTask extends SourceTask {
         taskId = Integer.parseInt(props.get(TASK_ID));
         sourcePartition = Collections.singletonMap(TASK_ID, taskId);
 
-        if (config.getRandomSeed() != null) {
-            random.setSeed(config.getRandomSeed());
-            // Each task will now deterministically advance it's random source
-            // This makes it such that each task will generate different data
-            for (int i = 0; i < taskId; i++) {
-                random.setSeed(random.nextLong());
-            }
-        }
-
         Map<String, Object> offset = context.offsetStorageReader().offset(sourcePartition);
         if (offset != null) {
             //  The offset as it is stored contains our next state, so restore it as-is.
@@ -111,6 +102,15 @@ public class PySourceConnectorTask extends SourceTask {
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
         System.out.println("task.poll()");
+
+        Object pyResult = pythonHost.callEntryPoint();
+        if (pyResult == null) {
+            System.out.println("null returned by python, message will be dropped");
+            return null;
+        }
+        System.out.println("returned by python: " + pyResult.toString());
+
+/*
         if (maxInterval > 0) {
             try {
                 Thread.sleep((long) (maxInterval * Math.random()));
@@ -130,6 +130,7 @@ public class PySourceConnectorTask extends SourceTask {
                     String.format("Stopping connector: generated the configured %d number of messages", count)
             );
         }
+*/
 
         // Re-seed the random each time so that we can save the seed to the source offsets.
         long seed = random.nextLong();
@@ -151,6 +152,7 @@ public class PySourceConnectorTask extends SourceTask {
         headers.addLong(CURRENT_ITERATION, count);
 
         final List<SourceRecord> records = new ArrayList<>();
+/*
         SourceRecord record = new SourceRecord(
                 sourcePartition,
                 sourceOffset,
@@ -164,6 +166,7 @@ public class PySourceConnectorTask extends SourceTask {
                 headers
         );
         records.add(record);
+*/
         count += records.size();
         return records;
     }
@@ -171,5 +174,6 @@ public class PySourceConnectorTask extends SourceTask {
     @Override
     public void stop() {
         System.out.println("task.stop()");
+        // TODO create config + call a python method
     }
 }

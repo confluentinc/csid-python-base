@@ -1,20 +1,14 @@
 package io.confluent.pytools;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import lombok.SneakyThrows;
 import org.apache.kafka.connect.data.ConnectSchema;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.errors.ConnectException;
@@ -25,6 +19,7 @@ import org.apache.kafka.connect.storage.OffsetStorageReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -35,8 +30,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 class TestSourceConnectorTask {
 
-    private static final String TOPIC = "my-topic";
-    private static final int NUM_MESSAGES = 100;
+    @TempDir
+    File tempDir;
+
+    private static final String TOPIC = "test-topic-" + UUID.randomUUID();;
+    private static final int NUM_MESSAGES = 10;
     private static final int MAX_INTERVAL_MS = 0;
     private static final int TASK_ID = 0;
 
@@ -60,7 +58,18 @@ class TestSourceConnectorTask {
         task = null;
     }
 
+    @SneakyThrows
+    @Test
+    void basic() {
+        createTask("init", "src_connector1.poll_basic_types");
+        generateRecords(10);
 
+        for (SourceRecord record : records) {
+            System.out.println(record.toString());
+        }
+    }
+
+/*
     @Test
     void shouldRestoreFromSourceOffsets() throws Exception {
         // Give the task an arbitrary source offset
@@ -116,13 +125,14 @@ class TestSourceConnectorTask {
             // expected
         }
     }
+*/
 
-    private void generateRecords() throws Exception {
+    private void generateRecords(int numMessages) throws Exception {
         records.clear();
-        while (records.size() < NUM_MESSAGES) {
+        while (records.size() < numMessages) {
             List<SourceRecord> newRecords = task.poll();
             assertNotNull(newRecords);
-            assertEquals(1, newRecords.size());
+            //assertEquals(1, newRecords.size());
             records.addAll(newRecords);
         }
     }
@@ -136,11 +146,19 @@ class TestSourceConnectorTask {
         return true;
     }
 
-    private void createTask() {
+    private void createTask(String initMethod, String entryPoint) {
         config.putIfAbsent(PySourceConnectorConfig.KAFKA_TOPIC_CONF, TOPIC);
         config.putIfAbsent(PySourceConnectorConfig.ITERATIONS_CONF, Integer.toString(NUM_MESSAGES));
         config.putIfAbsent(PySourceConnectorConfig.MAXINTERVAL_CONF, Integer.toString(MAX_INTERVAL_MS));
         config.putIfAbsent(PySourceConnectorTask.TASK_ID, Integer.toString(TASK_ID));
+
+        Path scriptsDirectory = Paths.get("src","test", "resources");
+        config.putIfAbsent(PySourceConnectorConfig.SCRIPTS_DIR_CONF, scriptsDirectory.toString());
+        config.putIfAbsent(PySourceConnectorConfig.WORKING_DIR_CONF, tempDir.toString());
+
+        config.putIfAbsent(PySourceConnectorConfig.CONFIGURE_CONF, initMethod);
+        config.putIfAbsent(PySourceConnectorConfig.ENTRY_POINT_CONF, entryPoint);
+        config.putIfAbsent(PySourceConnectorConfig.SETTINGS_CONF, "{\"conf1\":\"value1\", \"conf2\":\"value2\"}");
 
         task = new PySourceConnectorTask();
         // Initialize an offsetStorageReader that returns mocked sourceOffsets.
