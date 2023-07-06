@@ -77,6 +77,9 @@ public class ConnectStandalone {
   public boolean isRunning() {
     return connect != null && connect.isRunning();
   }
+  public boolean isReady() {
+    return connect != null && connect.isRunning();
+  }
 
   public void awaitStop() {
     await().atMost(CONNECT_STOP_TIMEOUT).until(() -> !isRunning());

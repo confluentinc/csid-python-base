@@ -17,12 +17,12 @@ How pemja works:
 - **PythonHost** - higher-level python host for connectors + SMTs
 - PyJavaIO - helpers for parameter checking/passing
 - PyUtils - helpers for python defaults on the host system
-- **ConnectSmt** - SMT encapsulating the python code
+- **PyConnectSmt** - SMT encapsulating the python code
 - ConnectConnector - Connector encapsulating the python code
 
 ## Python SMT
 
-Main java class = `io.confluent.pytools.ConnectSmt`
+Main java class = `io.confluent.pytools.PyConnectSmt`
 
 Step 1. Add the Python Tools jar to the `CLASSPATH`.
 
@@ -34,7 +34,7 @@ Step 3. Add the following properties to the connector you're adding the SMT to:
 
 ```json
 "transforms": "myTransform",
-"transforms.myTransform.type": "io.confluent.pytools.ConnectSmt",
+"transforms.myTransform.type": "io.confluent.pytools.PyConnectSmt",
 "transforms.myTransform.scripts.dir": "/app/",
 "transforms.myTransform.working.dir": "/temp/venv/",
 "transforms.myTransform.entry.point", "transform1.transform",
@@ -86,7 +86,7 @@ To filter out a message, the python transform can return `None`.
 
 ### Config properties
 
-- `<transform.prefix>.type` must be `io.confluent.pytools.ConnectSmt`
+- `<transform.prefix>.type` must be `io.confluent.pytools.PyConnectSmt`
 - `<transform.prefix>.scripts.dir`: the directory where the python scripts reside. 
 - `<transform.prefix>.working.dir`: optional, the directory where to build the python virtual environment. If not passed, the scripts directory will be used.
 - `<transform.prefix>.entry.point`: Python entry point for the transform. See details on python entry points below. 

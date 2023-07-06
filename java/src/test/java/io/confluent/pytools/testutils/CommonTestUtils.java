@@ -9,7 +9,6 @@ import static io.confluent.pytools.testutils.TestConstants.TIMEOUTS.POLL_INTERVA
 import static java.util.Collections.singleton;
 import static org.awaitility.Awaitility.await;
 
-import io.confluent.pytools.ConnectSmt;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +36,6 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -51,7 +49,6 @@ import org.apache.kafka.connect.tools.VerifiableSinkTask;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
-import io.confluent.connect.json.JsonSchemaConverter;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -111,25 +108,18 @@ public class CommonTestUtils {
   }
 
   public Properties getConnectWorkerProperties() {
+    return getConnectWorkerProperties(new Properties(), StringConverter.class.getName());
+  }
+
+    public Properties getConnectWorkerProperties(Properties overrides, String valueConverterClassName) {
     Properties props = new Properties();
     props.put(WorkerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers);
     props.put(WorkerConfig.KEY_CONVERTER_CLASS_CONFIG, JsonConverter.class.getName());
-    props.put(WorkerConfig.VALUE_CONVERTER_CLASS_CONFIG, JsonConverter.class.getName());
+    props.put(WorkerConfig.VALUE_CONVERTER_CLASS_CONFIG, valueConverterClassName);
     props.put(WorkerConfig.HEADER_CONVERTER_CLASS_CONFIG, StringConverter.class.getName());
     props.put(StandaloneConfig.OFFSET_STORAGE_FILE_FILENAME_CONFIG,
         createTempFile(tempDir).getAbsolutePath());
-    return props;
-  }
-
-  public Properties getJSONSchemaWorkerProperties() {
-    Properties props = new Properties();
-    props.put(WorkerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers);
-    props.put(WorkerConfig.KEY_CONVERTER_CLASS_CONFIG, JsonConverter.class.getName());
-    props.put(WorkerConfig.VALUE_CONVERTER_CLASS_CONFIG, JsonSchemaConverter.class.getName()); // StringConverter or JsonSchemaConverter
-    props.put(WorkerConfig.HEADER_CONVERTER_CLASS_CONFIG, StringConverter.class.getName());
-    props.put(StandaloneConfig.OFFSET_STORAGE_FILE_FILENAME_CONFIG,
-            createTempFile(tempDir).getAbsolutePath());
-    props.put("value.converter.schema.registry.url", "http://localhost:8081");
+    props.putAll(Optional.ofNullable(overrides).orElse(new Properties()));
     return props;
   }
 
@@ -155,21 +145,6 @@ public class CommonTestUtils {
   }
 
   public static final Charset CHARSET_UTF_8 = StandardCharsets.UTF_8;
-
-  public static final Header CAPTURED_PROPAGATED_HEADER = new RecordHeader(
-          "captured_propagated_header",
-          "captured_propagated_headerval".getBytes(CHARSET_UTF_8));
-
-  public Properties getHeaderInjectTransformProperties() {
-    Properties props = new Properties();
-
-    props.put("transforms", "insertHeader");
-    props.put("transforms.insertHeader.type", ConnectSmt.class.getName());
-    props.put("transforms.insertHeader.header", CAPTURED_PROPAGATED_HEADER.key());
-    props.put("transforms.insertHeader.value.literal",
-        new String(CAPTURED_PROPAGATED_HEADER.value(), CHARSET_UTF_8));
-    return props;
-  }
 
   public Properties getKafkaProperties(Properties overrides) {
     Properties props = new Properties();
