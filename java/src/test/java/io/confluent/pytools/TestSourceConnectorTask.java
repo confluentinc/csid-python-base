@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.kafka.connect.data.ConnectSchema;
 import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.source.SourceRecord;
@@ -21,11 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 class TestSourceConnectorTask {
@@ -64,9 +61,23 @@ class TestSourceConnectorTask {
         createTask("init", "src_connector1.poll_basic_types");
         generateRecords(10);
 
-        for (SourceRecord record : records) {
-            System.out.println(record.toString());
-        }
+        assertEquals(10, records.size());
+        SourceRecord record = records.get(0);
+        assertEquals(record.value().toString(), "azerty");
+        assertEquals(record.key(), 1234);
+    }
+
+    @SneakyThrows
+    @Test
+    void noKey() {
+        createTask("init", "src_connector1.poll_no_key");
+        generateRecords(10);
+
+        assertEquals(10, records.size());
+        SourceRecord record = records.get(0);
+        Struct value = (Struct)record.value();
+        assertEquals(value.get("first_name"), "John");
+        assertNull(record.key());
     }
 
 /*

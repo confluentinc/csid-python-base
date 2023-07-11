@@ -30,6 +30,29 @@ def poll_key_and_value():
         }}
     }]
 
+def poll_key_and_value_both_objects():
+    return [{
+        'key': {'type': 'STRUCT', 'value': {
+            'id': 1234,
+            'type': 'something'
+        }},
+        'value': {'type': 'STRUCT', 'value': {
+            'first_name': 'John',
+            'last_name': 'Doe',
+            'age': 25
+        }}
+    }, {
+        'key': {'type': 'STRUCT', 'value': {
+            'id': 567,
+            'type': 'else'
+        }},
+        'value': {'type': 'STRUCT', 'value': {
+            'first_name': 'Jane',
+            'last_name': 'Dolittle',
+            'age': 37
+        }}
+    }]
+
 def poll_no_key():
     return [{
         'key': None,

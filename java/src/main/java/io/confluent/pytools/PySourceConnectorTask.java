@@ -40,6 +40,7 @@ public class PySourceConnectorTask extends SourceTask {
 
     private PythonHost pythonHost;
     private String jsonPrivateSettings;
+    private String scriptName;
 
 
     @Override
@@ -57,6 +58,7 @@ public class PySourceConnectorTask extends SourceTask {
         String scriptsDir = config.getScriptsDir();
         String workingDir = config.getWorkingDir();
         String entryPoint = config.getEntryPoint();
+        scriptName = entryPoint; // TODO extract main method name
         String initMethod = config.getConfigureMethod();
         jsonPrivateSettings = config.getPythonSettings();
         String localDependenciesDir = config.getOfflineInstallPath();
@@ -103,12 +105,12 @@ public class PySourceConnectorTask extends SourceTask {
     public List<SourceRecord> poll() throws InterruptedException {
         System.out.println("task.poll()");
 
-        Object pyResult = pythonHost.callEntryPoint();
-        if (pyResult == null) {
+        ArrayList<HashMap<String, HashMap<String, Object>>> pyResults = (ArrayList<HashMap<String, HashMap<String, Object>>>)pythonHost.callEntryPoint();
+        if (pyResults == null) {
             System.out.println("null returned by python, message will be dropped");
             return null;
         }
-        System.out.println("returned by python: " + pyResult.toString());
+        System.out.println("returned by python: " + pyResults.toString());
 
 /*
         if (maxInterval > 0) {
@@ -152,21 +154,9 @@ public class PySourceConnectorTask extends SourceTask {
         headers.addLong(CURRENT_ITERATION, count);
 
         final List<SourceRecord> records = new ArrayList<>();
-/*
-        SourceRecord record = new SourceRecord(
-                sourcePartition,
-                sourceOffset,
-                topic,
-                null,
-                key.schema(),
-                key.value(),
-                value.schema(),
-                value.value(),
-                null,
-                headers
-        );
-        records.add(record);
-*/
+        for (HashMap<String, HashMap<String, Object>> result: pyResults) {
+            records.add(PyJavaIO.pollResultToSourceRecord(result, sourcePartition, sourceOffset, topic, headers, scriptName));
+        }
         count += records.size();
         return records;
     }
