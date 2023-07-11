@@ -12,52 +12,58 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+
+import static java.util.Map.entry;
 
 public class PyJavaIO {
     final static String KEY = "key";
     final static String VALUE = "value";
+    final static String DATA = "data";
     final static String TYPE = "type";
     //
+
+    static Schema getSchemaFromSourceRecord(HashMap<String, Object> keyOrValue, String scriptName) {
+        Schema schema;
+        try {
+            String structName = scriptName + ".key";
+            // TODO allow not providing the type (then use the data type)
+            schema = schemaFromTypeName(keyOrValue.get(TYPE).toString(), structName);
+            if (schema.type() == Schema.Type.STRUCT) {
+                schema = buildSchemaFromObject(structName, (HashMap<String, Object>)keyOrValue.get(DATA));
+            }
+        } catch (NullPointerException e) {
+            schema = null;
+        }
+        return schema;
+    }
+
+    static Object getDataFromSourceRecord(HashMap<String, Object> keyOrValue, Schema dataSchema) {
+        Object data;
+        try {
+            if (dataSchema.type() == Schema.Type.STRUCT) {
+                data = populateFieldsDataFromObject(dataSchema, (HashMap<String, Object>)keyOrValue.get(DATA));
+            } else {
+                // TODO allow not providing the type (then use the data type)
+                data = castFromTypeHint(keyOrValue.get(DATA), dataSchema);
+            }
+        } catch (NullPointerException e) {
+            data = null;
+        }
+        return data;
+    }
+
     static SourceRecord pollResultToSourceRecord(HashMap<String, HashMap<String, Object>> pollResult,
                                                  Map<String, Object> sourcePartition, Map<String, Object> sourceOffset,
                                                  String topic,
                                                  ConnectHeaders headers,
                                                  String scriptName) {
 
-        // TODO make generic method and call for key then value
-        Schema keySchema;
-        Object key;
-        try {
-            String structName = scriptName + ".key";
-            keySchema = schemaFromTypeName(pollResult.get(KEY).get(TYPE).toString(), structName);
-            if (keySchema.type() == Schema.Type.STRUCT) {
-                HashMap<String, Object> object = (HashMap<String, Object>)pollResult.get(KEY).get(VALUE);
-                keySchema = buildSchemaFromObject(structName, object);
-                key = populateFieldsDataFromObject(keySchema, object);
-            } else {
-                key = pollResult.get(KEY).get(VALUE);
-            }
-        } catch (NullPointerException e) {
-            keySchema = null;
-            key = null;
-        }
+        Schema keySchema = getSchemaFromSourceRecord(pollResult.get(KEY), scriptName);
+        Object key = getDataFromSourceRecord(pollResult.get(KEY), keySchema);
 
-        Schema valueSchema;
-        Object value;
-        try {
-            String structName = scriptName + ".value";
-            valueSchema = schemaFromTypeName(pollResult.get(VALUE).get(TYPE).toString(), structName);
-            if (valueSchema.type() == Schema.Type.STRUCT) {
-                HashMap<String, Object> object = (HashMap<String, Object>)pollResult.get(VALUE).get(VALUE);
-                valueSchema = buildSchemaFromObject(structName, object);
-                value = populateFieldsDataFromObject(valueSchema, object);
-            } else {
-                value = pollResult.get(VALUE).get(VALUE);
-            }
-        } catch (NullPointerException e) {
-            valueSchema = null;
-            value = null;
-        }
+        Schema valueSchema = getSchemaFromSourceRecord(pollResult.get(VALUE), scriptName);
+        Object value = getDataFromSourceRecord(pollResult.get(VALUE), valueSchema);
 
         return new SourceRecord(
                 sourcePartition,
@@ -88,28 +94,72 @@ public class PyJavaIO {
         return builder.build();
     }
 
+
+    /*
+    [Z = boolean
+    [B = byte
+    [S = short
+    [I = int
+    [J = long
+    [F = float
+    [D = double
+    [C = char
+    [L = any non-primitives(Object)
+     */
     static Schema javaClassToSchema(String className) {
-        if (className.contains("Long")) {
-            return schemaFromTypeName("INT64", null);
-        } else if (className.contains("String")) {
-            return schemaFromTypeName("STRING", null);
-        }
-        return schemaFromTypeName("STRING", null);
+        Map<String, Schema> classToSchemaMap = Map.ofEntries(
+                entry("java.lang.String", Schema.STRING_SCHEMA),
+                entry("java.lang.Short", Schema.INT16_SCHEMA),
+                entry("java.lang.Integer", Schema.INT32_SCHEMA),
+                entry("java.lang.Long", Schema.INT64_SCHEMA),
+                entry("java.lang.Float", Schema.FLOAT32_SCHEMA),
+                entry("java.lang.Double", Schema.FLOAT64_SCHEMA),
+                entry("java.lang.Boolean", Schema.BOOLEAN_SCHEMA),
+                entry("[B", Schema.BYTES_SCHEMA),
+                entry("java.lang.Byte", Schema.BYTES_SCHEMA) // ???
+        );
+        Schema correspondingSchema = classToSchemaMap.get(className);
+        return Objects.requireNonNullElse(correspondingSchema, Schema.STRING_SCHEMA);
     }
 
-    // TODO no support for nested types yet
+    // TODO support for nested types
     static void populateSchemaFieldsFromObject(SchemaBuilder builder, HashMap<String, Object> objectMap) {
         for (Map.Entry<String, Object> entry : objectMap.entrySet()) {
-            Schema fieldSchema = javaClassToSchema(entry.getValue().getClass().toString());
+            Schema fieldSchema = javaClassToSchema(
+                    entry.getValue().getClass().toString().replaceFirst("class ", ""));
             String fieldName = entry.getKey();
             builder.field(fieldName, fieldSchema);
         }
     }
 
+    // pemja casts python ints into longs (INT64) and floats into doubles (FLOAT64)
+    // if the type requested in the dict returned by the entry point is different, we do a cast
+    // however we only do from ints to (smaller) ints and floats to (smaller) floats
+
+    // TODO use Guava's checkedCast()
+    static Object castFromTypeHint(Object data, Schema requestedType) {
+        if (data instanceof java.lang.Long) {
+            if (requestedType == Schema.INT32_SCHEMA) {
+                return ((Long) data).intValue();
+            }
+            if (requestedType == Schema.INT16_SCHEMA) {
+                return ((Long) data).shortValue();
+            }
+        } else if (data instanceof java.lang.Double) {
+            if (requestedType == Schema.FLOAT32_SCHEMA) {
+                return ((Double)data).floatValue();
+            }
+        }
+        return data;
+    }
+
     static Struct populateFieldsDataFromObject(Schema structSchema, HashMap<String, Object> map) {
         Struct record = new Struct(structSchema);
+        int i = 0;
         for (Map.Entry<String, Object> entry : map.entrySet()) {
-            record.put(entry.getKey(), entry.getValue());
+            Schema requestedType = structSchema.fields().get(i++).schema();
+            Object data = castFromTypeHint(entry.getValue(), requestedType);
+            record.put(entry.getKey(), data);
         }
         return record;
     }
@@ -142,12 +192,15 @@ public class PyJavaIO {
         switch (itemSchema.type()) {
             case INT8:
             case INT16:
+                return Short.parseShort(itemData.toString());
             case INT32:
-            case INT64:
                 return Integer.parseInt(itemData.toString());
+            case INT64:
+                return Long.parseLong(itemData.toString());
             case FLOAT32:
-            case FLOAT64:
                 return Float.parseFloat(itemData.toString());
+            case FLOAT64:
+                return Double.parseDouble(itemData.toString());
             case BOOLEAN:
                 return Boolean.parseBoolean(itemData.toString());
             case STRUCT:
@@ -194,5 +247,4 @@ public class PyJavaIO {
                 .replaceFirst("Schema", "")
                 .replaceFirst("STRUCT", "JSON");
     }
-
 }

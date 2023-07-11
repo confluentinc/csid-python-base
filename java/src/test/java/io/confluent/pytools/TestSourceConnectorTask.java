@@ -12,7 +12,6 @@ import lombok.SneakyThrows;
 import org.apache.kafka.connect.data.ConnectSchema;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
-import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTaskContext;
@@ -58,25 +57,62 @@ class TestSourceConnectorTask {
     @SneakyThrows
     @Test
     void basic() {
-        createTask("init", "src_connector1.poll_basic_types");
+        createPythonTask("init", "src_connector1.poll_basic_types");
         generateRecords(10);
 
         assertEquals(10, records.size());
+
         SourceRecord record = records.get(0);
         assertEquals(record.value().toString(), "azerty");
         assertEquals(record.key(), 1234);
+        assertTrue(record.key() instanceof java.lang.Integer);
+
+        record = records.get(1);
+        assertEquals(record.value().toString(), "abcdef");
+        assertEquals(record.key(), 6789L);
+        assertTrue(record.key() instanceof java.lang.Long);
     }
 
     @SneakyThrows
     @Test
     void noKey() {
-        createTask("init", "src_connector1.poll_no_key");
+        createPythonTask("init", "src_connector1.poll_no_key");
         generateRecords(10);
 
         assertEquals(10, records.size());
         SourceRecord record = records.get(0);
         Struct value = (Struct)record.value();
         assertEquals(value.get("first_name"), "John");
+        assertNull(record.key());
+        assertTrue(value.get("age") instanceof java.lang.Long);
+    }
+
+    @SneakyThrows
+    @Test
+    void allTypes() {
+        createPythonTask("init", "src_connector1.all_default_types");
+
+        generateRecords(1);
+        assertEquals(1, records.size());
+
+        SourceRecord record = records.get(0);
+
+        Struct value = (Struct)record.value();
+
+        assertEquals(value.get("str"), "Hello");
+        assertTrue(value.get("str") instanceof java.lang.String);
+
+        assertEquals(value.get("bool"), true);
+        assertTrue(value.get("bool") instanceof java.lang.Boolean);
+
+        assertEquals(value.get("float"), 1.0D);
+        assertTrue(value.get("float") instanceof java.lang.Double);
+
+        assertTrue(value.get("bytes") instanceof java.lang.Object);
+
+        assertTrue(value.get("int") instanceof java.lang.Long);
+        assertEquals(value.get("int"), 25L);
+
         assertNull(record.key());
     }
 
@@ -157,7 +193,7 @@ class TestSourceConnectorTask {
         return true;
     }
 
-    private void createTask(String initMethod, String entryPoint) {
+    private void createPythonTask(String initMethod, String entryPoint) {
         config.putIfAbsent(PySourceConnectorConfig.KAFKA_TOPIC_CONF, TOPIC);
         config.putIfAbsent(PySourceConnectorConfig.ITERATIONS_CONF, Integer.toString(NUM_MESSAGES));
         config.putIfAbsent(PySourceConnectorConfig.MAXINTERVAL_CONF, Integer.toString(MAX_INTERVAL_MS));

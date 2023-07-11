@@ -9,10 +9,7 @@ import java.util.Map;
 import java.util.Random;
 
 import lombok.SneakyThrows;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.connect.data.Schema;
-import org.apache.kafka.connect.data.SchemaAndValue;
-import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.header.ConnectHeaders;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
