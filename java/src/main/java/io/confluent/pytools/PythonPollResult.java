@@ -11,15 +11,16 @@ import java.util.Map;
 
 public class PythonPollResult {
 
-    private Schema keySchema;
-    private Object key;
-    private Schema valueSchema;
-    private Object value;
+    private final Schema keySchema;
+    private final Object key;
+    private final Schema valueSchema;
+    private final Object value;
 
     final static String KEY = "key";
     final static String VALUE = "value";
 
     // TODO support for nested types
+    // pemja casts python ints into longs (INT64) and floats into doubles (FLOAT64)
     private static void populateSchemaFieldsFromObject(SchemaBuilder builder, HashMap<String, Object> objectMap) {
         for (Map.Entry<String, Object> entry : objectMap.entrySet()) {
             Schema fieldSchema = PyJavaIO.getSchemaFromJavaClassName(

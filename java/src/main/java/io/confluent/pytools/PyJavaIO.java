@@ -26,7 +26,6 @@ public class PyJavaIO {
         return rec;
     }
 
-
     static Schema getSchemaFromDataType(Object data) {
         if (data instanceof java.lang.Long) {
             return Schema.INT64_SCHEMA;
@@ -67,10 +66,6 @@ public class PyJavaIO {
         return Objects.requireNonNullElse(correspondingSchema, Schema.STRING_SCHEMA);
     }
 
-    // pemja casts python ints into longs (INT64) and floats into doubles (FLOAT64)
-    // if the type requested in the dict returned by the entry point is different, we do a cast
-    // however we only do from ints to (smaller) ints and floats to (smaller) floats
-
     // TODO use Guava's checkedCast()
     static Object castFromDataType(Object data, Schema requestedType) {
         if (data instanceof java.lang.Long) {
@@ -86,30 +81,6 @@ public class PyJavaIO {
             }
         }
         return data;
-    }
-
-    static Schema schemaFromTypeName(String typeName, String structName) {
-        switch (typeName) {
-            case "INT8":
-                return Schema.INT8_SCHEMA;
-            case "INT16":
-                return Schema.INT16_SCHEMA;
-            case "INT32":
-                return Schema.INT32_SCHEMA;
-            case "INT64":
-                return Schema.INT64_SCHEMA;
-            case "FLOAT32":
-                return Schema.FLOAT32_SCHEMA;
-            case "FLOAT64":
-                return Schema.FLOAT64_SCHEMA;
-            case "BOOLEAN":
-                return Schema.BOOLEAN_SCHEMA;
-            case "STRUCT":
-                return SchemaBuilder.struct().name(structName).build();
-            case "STRING":
-            default:
-                return Schema.STRING_SCHEMA;
-        }
     }
 
     static Object typedParse(Schema itemSchema, Object itemData) {

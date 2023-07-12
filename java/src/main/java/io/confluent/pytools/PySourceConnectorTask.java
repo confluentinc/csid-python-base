@@ -117,6 +117,7 @@ public class PySourceConnectorTask extends SourceTask {
         } else if (uncastResults instanceof HashMap) {
             pyResults.add((HashMap<String, HashMap<String, Object>>)uncastResults);
         } else {
+            System.out.println("Invalid data type returned by python, message(s) will be dropped");
             return null; // TODO check if we need to throw an exception instead
         }
 
