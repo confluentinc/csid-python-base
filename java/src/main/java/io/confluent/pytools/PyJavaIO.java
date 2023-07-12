@@ -23,23 +23,12 @@ public class PyJavaIO {
     final static String TYPE = "type";
     //
 
-    static Schema getSchemaFromDataType(Object data) {
-        if (data instanceof java.lang.Long) {
-            return Schema.INT64_SCHEMA;
-        } else if (data instanceof java.lang.Double) {
-            return Schema.FLOAT64_SCHEMA;
-        } else if (data instanceof java.lang.Boolean) {
-            return Schema.BOOLEAN_SCHEMA;
-        } else if (data instanceof java.lang.Byte) {
-            return Schema.BYTES_SCHEMA;
-        }
-        return Schema.STRING_SCHEMA;
-    }
 
-    static Schema getSchemaFromPollResult(HashMap<String, Object> keyOrValue, String scriptName) {
+    static Schema getSchemaFromPollResultAsMap(HashMap<String, Object> keyOrValue, String scriptName) {
         Schema schema;
         try {
             String structName = scriptName + ".key";
+
             if (keyOrValue.get(TYPE) == null) {
                 schema = getSchemaFromDataType(keyOrValue.get(VALUE));
             } else {
@@ -54,13 +43,38 @@ public class PyJavaIO {
         return schema;
     }
 
-    static Object getDataFromPollResult(HashMap<String, Object> keyOrValue, Schema dataSchema) {
+    static Object getDataFromPollResultAsMap(HashMap<String, Object> keyOrValue, Schema dataSchema) {
         Object data;
         try {
             if (dataSchema.type() == Schema.Type.STRUCT) {
                 data = populateFieldsDataFromObject(dataSchema, (HashMap<String, Object>)keyOrValue.get(DATA));
             } else {
-                data = castFromTypeHint(keyOrValue.get(DATA), dataSchema);
+                data = castFromDataType(keyOrValue.get(DATA), dataSchema);
+            }
+        } catch (NullPointerException e) {
+            data = null;
+        }
+        return data;
+    }
+
+    static Schema getSchemaFromPollResult(Object keyOrValue, String scriptName) {
+        if (keyOrValue instanceof HashMap) {
+            return getSchemaFromPollResultAsMap((HashMap<String, Object>)keyOrValue, scriptName);
+        }
+        return getSchemaFromDataType(keyOrValue);
+    }
+
+    static Object getDataFromPollResult(Object keyOrValue, Schema dataSchema) {
+        if (keyOrValue instanceof HashMap) {
+            return getDataFromPollResultAsMap((HashMap<String, Object>)keyOrValue, dataSchema);
+        }
+
+        Object data;
+        try {
+            if (dataSchema.type() == Schema.Type.STRUCT) {
+                data = populateFieldsDataFromObject(dataSchema, (HashMap<String, Object>)keyOrValue);
+            } else {
+                data = castFromDataType(keyOrValue, dataSchema);
             }
         } catch (NullPointerException e) {
             data = null;
@@ -109,6 +123,18 @@ public class PyJavaIO {
         return builder.build();
     }
 
+    static Schema getSchemaFromDataType(Object data) {
+        if (data instanceof java.lang.Long) {
+            return Schema.INT64_SCHEMA;
+        } else if (data instanceof java.lang.Double) {
+            return Schema.FLOAT64_SCHEMA;
+        } else if (data instanceof java.lang.Boolean) {
+            return Schema.BOOLEAN_SCHEMA;
+        } else if (data instanceof java.lang.Byte) {
+            return Schema.BYTES_SCHEMA;
+        }
+        return Schema.STRING_SCHEMA;
+    }
 
     /*
     [Z = boolean
@@ -121,7 +147,7 @@ public class PyJavaIO {
     [C = char
     [L = any non-primitives(Object)
      */
-    static Schema javaClassToSchema(String className) {
+    static Schema getSchemaFromJavaClassName(String className) {
         Map<String, Schema> classToSchemaMap = Map.ofEntries(
                 entry("java.lang.String", Schema.STRING_SCHEMA),
                 entry("java.lang.Short", Schema.INT16_SCHEMA),
@@ -140,7 +166,7 @@ public class PyJavaIO {
     // TODO support for nested types
     static void populateSchemaFieldsFromObject(SchemaBuilder builder, HashMap<String, Object> objectMap) {
         for (Map.Entry<String, Object> entry : objectMap.entrySet()) {
-            Schema fieldSchema = javaClassToSchema(
+            Schema fieldSchema = getSchemaFromJavaClassName(
                     entry.getValue().getClass().toString().replaceFirst("class ", ""));
             String fieldName = entry.getKey();
             builder.field(fieldName, fieldSchema);
@@ -152,7 +178,7 @@ public class PyJavaIO {
     // however we only do from ints to (smaller) ints and floats to (smaller) floats
 
     // TODO use Guava's checkedCast()
-    static Object castFromTypeHint(Object data, Schema requestedType) {
+    static Object castFromDataType(Object data, Schema requestedType) {
         if (data instanceof java.lang.Long) {
             if (requestedType == Schema.INT32_SCHEMA) {
                 return ((Long) data).intValue();
@@ -173,7 +199,7 @@ public class PyJavaIO {
         int i = 0;
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             Schema requestedType = structSchema.fields().get(i++).schema();
-            Object data = castFromTypeHint(entry.getValue(), requestedType);
+            Object data = castFromDataType(entry.getValue(), requestedType);
             record.put(entry.getKey(), data);
         }
         return record;

@@ -24,8 +24,7 @@ import org.junit.jupiter.api.io.TempDir;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-class TestSourceConnectorTask {
-
+class TestPythonPollResult {
     @TempDir
     File tempDir;
 
@@ -37,8 +36,6 @@ class TestSourceConnectorTask {
     private Map<String, String> config;
     private PySourceConnectorTask task;
     private List<SourceRecord> records;
-    private Schema expectedValueConnectSchema;
-    private Schema expectedKeyConnectSchema;
     private Map<String, Object> sourceOffsets;
 
     @BeforeEach
@@ -57,76 +54,75 @@ class TestSourceConnectorTask {
     @SneakyThrows
     @Test
     void basic() {
-        createPythonTask("init", "src_connector1.poll_basic_types");
-        generateRecords(10);
+        createPythonTask("init", "src_connector2.poll_basic_types");
+        generateRecords(3);
 
-        assertEquals(10, records.size());
+        assertEquals(3, records.size());
 
         SourceRecord record = records.get(0);
-        assertEquals(record.value().toString(), "azerty");
-        assertEquals(record.key(), 1234);
-        assertTrue(record.key() instanceof java.lang.Integer);
+        assertEquals(record.value().toString(), "some string");
+        assertEquals(record.key(), 1234L);
+        assertTrue(record.key() instanceof java.lang.Long);
 
         record = records.get(1);
-        assertEquals(record.value().toString(), "abcdef");
-        assertEquals(record.key(), 6789L);
-        assertTrue(record.key() instanceof java.lang.Long);
+        assertEquals(record.value(), true);
+        assertEquals(record.key(), 1234.5D);
+        assertTrue(record.key() instanceof java.lang.Double);
+
+        record = records.get(2);
+        assertEquals(record.key(), 1234.5D);
+
+        Struct value = (Struct)record.value();
+        assertEquals(value.get("str"), "Hello");
+        assertTrue(value.get("str") instanceof java.lang.String);
+
+        assertEquals(value.get("bool"), true);
+        assertTrue(value.get("bool") instanceof java.lang.Boolean);
+
+        assertTrue(value.get("int") instanceof java.lang.Long);
+        assertEquals(value.get("int"), 25L);
+
+        assertEquals(value.get("float"), 1.0D);
+        assertTrue(value.get("float") instanceof java.lang.Double);
+
+        assertTrue(value.get("bytes") instanceof java.lang.Object);
     }
 
     @SneakyThrows
     @Test
-    void noKey() {
-        createPythonTask("init", "src_connector1.poll_no_key");
-        generateRecords(10);
+    void bothObjects() {
+        createPythonTask("init", "src_connector2.poll_key_and_value_both_objects");
+        generateRecords(2);
 
-        assertEquals(10, records.size());
+        assertEquals(2, records.size());
+
         SourceRecord record = records.get(0);
         Struct value = (Struct)record.value();
+        Struct key = (Struct)record.key();
+
+        assertEquals(key.get("id"), 1234L);
+        assertEquals(key.get("type"), "something");
+
         assertEquals(value.get("first_name"), "John");
-        assertNull(record.key());
+        assertEquals(value.get("last_name"), "Doe");
+        assertTrue(value.get("age") instanceof java.lang.Long);
+
+        record = records.get(1);
+        value = (Struct)record.value();
+        key = (Struct)record.key();
+
+        assertEquals(key.get("id"), 567L);
+        assertEquals(key.get("type"), "else");
+
+        assertEquals(value.get("first_name"), "Jane");
+        assertEquals(value.get("last_name"), "Dolittle");
         assertTrue(value.get("age") instanceof java.lang.Long);
     }
 
     @SneakyThrows
     @Test
-    void noType() {
-        createPythonTask("init", "src_connector1.poll_no_type");
-        generateRecords(2);
-
-        assertEquals(2, records.size());
-
-        SourceRecord record = records.get(0);
-        assertEquals(record.key(), 1234L);
-        assertEquals(record.value(), "some string");
-
-        record = records.get(1);
-        assertEquals(record.key(), 1234.5D);
-        assertEquals(record.value(), true);
-    }
-
-    @SneakyThrows
-    @Test
-    void noDataField() {
-        createPythonTask("init", "src_connector1.poll_no_data_field");
-        generateRecords(2);
-
-        assertEquals(2, records.size());
-
-        SourceRecord record = records.get(0);
-        assertEquals(record.key(), 1234L);
-        assertEquals(record.value(), "some string");
-
-        record = records.get(1);
-        assertEquals(record.key(), 1234.5D);
-        assertEquals(record.value(), true);
-    }
-
-
-
-    @SneakyThrows
-    @Test
-    void allTypes() {
-        createPythonTask("init", "src_connector1.all_default_types");
+    void allTypesNoKey() {
+        createPythonTask("init", "src_connector2.all_default_types");
 
         generateRecords(1);
         assertEquals(1, records.size());
@@ -152,81 +148,14 @@ class TestSourceConnectorTask {
         assertNull(record.key());
     }
 
-/*
-    @Test
-    void shouldRestoreFromSourceOffsets() throws Exception {
-        // Give the task an arbitrary source offset
-        sourceOffsets = new HashMap<>();
-        sourceOffsets.put(PySourceConnectorTask.RANDOM_SEED, 100L);
-        sourceOffsets.put(PySourceConnectorTask.CURRENT_ITERATION, 50L);
-        sourceOffsets.put(PySourceConnectorTask.TASK_GENERATION, 0L);
-        createTask();
-
-        // poll once to advance the generator
-        SourceRecord firstPoll = task.poll().get(0);
-        // poll a second time to predict the future
-        SourceRecord pollA = task.poll().get(0);
-        // extract the offsets after the first poll to restore to the next task instance
-        //noinspection unchecked
-        sourceOffsets = (Map<String, Object>) firstPoll.sourceOffset();
-        createTask();
-        // poll once after the restore
-        SourceRecord pollB = task.poll().get(0);
-
-        // the generation should have incremented, but the remaining details of the record should be identical
-        assertEquals(1L, pollA.sourceOffset().get(PySourceConnectorTask.TASK_GENERATION));
-        assertEquals(2L, pollB.sourceOffset().get(PySourceConnectorTask.TASK_GENERATION));
-        assertEquals(pollA.sourceOffset().get(PySourceConnectorTask.TASK_ID), pollB.sourceOffset().get(PySourceConnectorTask.TASK_ID));
-        assertEquals(pollA.sourceOffset().get(PySourceConnectorTask.CURRENT_ITERATION), pollB.sourceOffset().get(PySourceConnectorTask.CURRENT_ITERATION));
-        assertEquals(pollA.sourcePartition(), pollB.sourcePartition());
-        assertEquals(pollA.valueSchema(), pollB.valueSchema());
-        assertEquals(pollA.value(), pollB.value());
-    }
-
-    @Test
-    void shouldInjectHeaders()  throws Exception {
-        createTask();
-        generateRecords();
-        for (SourceRecord record : records) {
-            assertEquals((long) TASK_ID, record.headers().lastWithName(PySourceConnectorTask.TASK_ID).value());
-            assertEquals(0L, record.headers().lastWithName(PySourceConnectorTask.TASK_GENERATION).value());
-            assertNotNull(record.headers().lastWithName(PySourceConnectorTask.CURRENT_ITERATION));
-        }
-    }
-
-    @Test
-    void shouldFailToGenerateMoreRecordsThanSpecified() throws Exception {
-        // Generate the expected number of records
-        createTask();
-        generateRecords();
-
-        // Attempt to get another batch of records, but the task is expected to fail
-        try {
-            task.poll();
-            fail("Expected poll to fail");
-        } catch (ConnectException e) {
-            // expected
-        }
-    }
-*/
 
     private void generateRecords(int numMessages) throws Exception {
         records.clear();
         while (records.size() < numMessages) {
             List<SourceRecord> newRecords = task.poll();
             assertNotNull(newRecords);
-            //assertEquals(1, newRecords.size());
             records.addAll(newRecords);
         }
-    }
-
-    private boolean isConnectInstance(Object value, Schema expected) {
-        try {
-            ConnectSchema.validateValue(expected, value);
-        } catch (DataException e) {
-            return false;
-        }
-        return true;
     }
 
     private void createPythonTask(String initMethod, String entryPoint) {

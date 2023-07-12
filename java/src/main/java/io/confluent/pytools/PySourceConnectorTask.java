@@ -151,8 +151,10 @@ public class PySourceConnectorTask extends SourceTask {
         headers.addLong(CURRENT_ITERATION, count);
 
         final List<SourceRecord> records = new ArrayList<>();
-        for (HashMap<String, HashMap<String, Object>> result: pyResults) {
-            records.add(PyJavaIO.pollResultToSourceRecord(result, sourcePartition, sourceOffset, topic, headers, scriptName));
+        for (HashMap<String, HashMap<String, Object>> rawResult: pyResults) {
+            PythonPollResult pyResult = new PythonPollResult(rawResult, scriptName);
+            records.add(pyResult.toSourceRecord(sourcePartition, sourceOffset, topic, headers));
+            // records.add(PyJavaIO.pollResultToSourceRecord(rawResult, sourcePartition, sourceOffset, topic, headers, scriptName));
         }
         count += records.size();
         return records;

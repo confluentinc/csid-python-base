@@ -2,14 +2,13 @@ package io.confluent.pytools;
 
 import lombok.SneakyThrows;
 import org.apache.kafka.connect.data.Schema;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.stream.Stream;
 
-import static io.confluent.pytools.PyJavaIO.javaClassToSchema;
+import static io.confluent.pytools.PyJavaIO.getSchemaFromJavaClassName;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -32,6 +31,6 @@ public class TestPyJavaIO {
     @ParameterizedTest
     @MethodSource("provideClassToSchemaArgs")
     void classToSchema(String className, Schema correspondingSchema) {
-        assertSame(javaClassToSchema(className), correspondingSchema);
+        assertSame(getSchemaFromJavaClassName(className), correspondingSchema);
     }
 }

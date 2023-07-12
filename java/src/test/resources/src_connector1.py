@@ -72,6 +72,24 @@ def poll_no_type():
         'value': {'data': True}
     }]
 
+def poll_no_data_field():
+    return [{
+        'key': 1234,
+        'value': "some string"
+    },{
+        'key':  1234.5,
+        'value':  True
+    },{
+        'key':  1234.5,
+        'value': {'type': 'STRUCT', 'data': {
+            'str': 'Hello',
+            'bool': True,
+            'int': 25,
+            'float': 1.0,
+            'bytes': b'\x04\x00'
+        }}
+    }]
+
 def all_default_types():
     return [{
         'key': None,
