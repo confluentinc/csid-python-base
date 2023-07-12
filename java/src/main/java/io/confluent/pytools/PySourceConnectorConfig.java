@@ -43,7 +43,7 @@ public class PySourceConnectorConfig extends AbstractConfig {
             "(Called once when the connector task starts.)";
 
     public static final String OFFLINE_INSTALL_CONF = "offline.installation.dir";
-    public static final String OFFLINE_INSTALL_DOC = "offline.installation.dir";
+    public static final String OFFLINE_INSTALL_DOC = "Offline installation directory";
 
     public static final String SETTINGS_CONF = "private.settings";
     public static final String SETTINGS_DOC = "A JSON string with private settings given to the init (task start) method.";

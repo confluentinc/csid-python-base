@@ -10,17 +10,7 @@ How pemja works:
 - It starts a thread for the python interpreter in the JVM
 - It calls python code using Java to C interface (JNI) and a C python module
 
-## Python Tools (java) Classes
-
-- OperatingSystemProcess - OS process utils/wrapper
-- PythonEnvironment - low-level python (virtual) environment
-- **PythonHost** - higher-level python host for connectors + SMTs
-- PyJavaIO - helpers for parameter checking/passing
-- PyUtils - helpers for python defaults on the host system
-- **PyConnectSmt** - SMT encapsulating the python code
-- ConnectConnector - Connector encapsulating the python code
-
-## Python SMT
+## 1. Python SMT
 
 Main java class = `io.confluent.pytools.PyConnectSmt`
 
@@ -121,4 +111,130 @@ So the entry point should be provided as `algorithms.strings.decode_string` and 
 
 - How to provide packages for offline installation of the python environment? Put the wheel packages in a directory and provide it using `<transform.prefix>.offline.installation.dir`.
 - The python script cannot/shouldn't change the type of the key or of the value.
-- 
+
+## 2. Python Source Connector
+
+Main java class = `io.confluent.pytools.PySourceConnector`
+
+Step 1. Add the Python Tools jar to the `CLASSPATH`.
+
+Step 2. Put your python scripts, including an optional `requirements.txt` in a directory (the scripts directory).
+
+Step 3. Add the following properties to the connector you're creating:
+
+(full description of the properties later in this document)
+
+```json
+ {
+  "name": "py-connect-01",
+  "config": {
+    "connector.class": "io.confluent.pytools.PySourceConnector",
+    "tasks.max": "1",
+    "topics": "topic-01",
+    
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    .../... <-- regular connect properties
+    "value.converter.schema.registry.url": "http://localhost:8081",
+    
+    "scripts.dir": "/app/",
+    "working.dir": "/temp/venv/",
+    "entry.point", "connector01.poll",
+    "init.method", "init",
+    "private.settings", "{\"conf1\":\"value1\", \"conf2\":\"value2\"}"
+  }
+}
+```
+
+### How it works
+
+See https://docs.confluent.io/platform/current/connect/devguide.html for Kafka Connect development concepts.
+
+👉 When initializing the connector task, the connector builds a python virtual environment
+and (pip) installs the libraries referenced in the `requirements.txt` file. Then, it calls the `init()` method of the
+python script (if configured). It also installs the `pemja` library in the virtual environment.
+
+For each call of the `poll()` call of the java Source connector SDK, it calls the `entry.point`
+python method and expects a single Kafka record or a list of Kafka records (see next section).
+
+### Python script and method signatures
+
+For source connectors, the `poll()` method is called repeatedly and it's supposed to return a list of `SourceRecord` objects.
+The `poll()` method has the following signature:
+
+`def poll(offsets)`
+
+- offset: the offsets (as a `dict<string, string>`). See below (TODO).
+
+The `poll()` method can return either a list of records (described below) or a single one. 
+
+Records are expressed as python dicts containing 2 keys: `key` and `value`.
+
+The data for those keys is either directly a basic type (integer, float, boolean, string or bytes), or a dict (with keys and values of basic types).
+
+For example:
+
+```python
+
+# key and value as a single basic type
+def poll_basic_types():
+    return [{
+        'key': 1234,
+        'value': "some string"
+    },{
+        'key':  4567,
+        'value':  "another string"
+    }]
+
+# key and value are objects/dicts
+def poll_objects():
+    return [{
+        'key': {
+            'id': 1234,
+            'type': 'something'
+        },
+        'value': {
+            'first_name': 'John',
+            'last_name': 'Doe',
+            'age': 25
+        }
+    }, {
+        'key': {
+            'id': 567,
+            'type': 'else'
+        },
+        'value': {
+            'first_name': 'Jane',
+            'last_name': 'Dolittle',
+            'age': 37
+        }
+    }]
+
+# keys or values are optional
+def poll_no_key():
+    return [{
+        'key': None,
+        'value': "some string"
+    },{
+        'key':  None,
+        'value':  "another string"
+    }]
+
+
+# a single record can be returned
+def poll_single():
+    return {
+        'key': None,
+        'value': "some string"
+    }
+
+
+```
+
+### Config properties
+
+- `scripts.dir`: the directory where the python scripts reside.
+- `working.dir`: optional, the directory where to build the python virtual environment. If not passed, the scripts directory will be used.
+- `entry.point`: Python entry point for the connector (poll() method). See details on python entry points above.
+- `init.method`: optional, method called once when it initializes the connector task.
+- `private.settings`: String passed to the python script. Can be used to put settings in JSON format; eg. `"{\"conf1\":\"value1\", \"conf2\":\"value2\"}"`.
+- `offline.installation.dir`: optional, the directory containing wheel/python packages for offline installation of the packages in the virtual environment.
