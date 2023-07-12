@@ -227,8 +227,18 @@ def poll_single():
         'value': "some string"
     }
 
-
 ```
+
+On the java side, after the `poll()` method has been called, `SourceRecord` objects are created and sent to the destination topic.
+From the python data, java stores the corresponding basic types:
+
+- Python strings become `String` java objects.
+- Python integers become `Long` (64-bit integers) java objects.
+- Python floats become `Double` (64-bit floats) java objects.
+- Python bytes arrays become `Byte` arrays.
+- Python bools become `Boolean` java objects.
+
+The `poll()` method can return `None` (java: `null`) if there's nothing to produce at the time of the call. The method will be called again later.
 
 ### Config properties
 
