@@ -89,6 +89,23 @@ class TestSourceConnectorTask {
 
     @SneakyThrows
     @Test
+    void noType() {
+        createPythonTask("init", "src_connector1.poll_no_type");
+        generateRecords(2);
+
+        assertEquals(2, records.size());
+
+        SourceRecord record = records.get(0);
+        assertEquals(record.key(), 1234L);
+        assertEquals(record.value(), "some string");
+
+        record = records.get(1);
+        assertEquals(record.key(), 1234.5D);
+        assertEquals(record.value(), true);
+    }
+
+    @SneakyThrows
+    @Test
     void allTypes() {
         createPythonTask("init", "src_connector1.all_default_types");
 

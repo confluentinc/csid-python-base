@@ -63,6 +63,15 @@ def poll_no_key():
         }}
     }]
 
+def poll_no_type():
+    return [{
+        'key': {'data': 1234},
+        'value': {'data': "some string"}
+    },{
+        'key': {'data': 1234.5},
+        'value': {'data': True}
+    }]
+
 def all_default_types():
     return [{
         'key': None,

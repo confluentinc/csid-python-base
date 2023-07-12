@@ -23,12 +23,28 @@ public class PyJavaIO {
     final static String TYPE = "type";
     //
 
-    static Schema getSchemaFromSourceRecord(HashMap<String, Object> keyOrValue, String scriptName) {
+    static Schema getSchemaFromDataType(Object data) {
+        if (data instanceof java.lang.Long) {
+            return Schema.INT64_SCHEMA;
+        } else if (data instanceof java.lang.Double) {
+            return Schema.FLOAT64_SCHEMA;
+        } else if (data instanceof java.lang.Boolean) {
+            return Schema.BOOLEAN_SCHEMA;
+        } else if (data instanceof java.lang.Byte) {
+            return Schema.BYTES_SCHEMA;
+        }
+        return Schema.STRING_SCHEMA;
+    }
+
+    static Schema getSchemaFromPollResult(HashMap<String, Object> keyOrValue, String scriptName) {
         Schema schema;
         try {
             String structName = scriptName + ".key";
-            // TODO allow not providing the type (then use the data type)
-            schema = schemaFromTypeName(keyOrValue.get(TYPE).toString(), structName);
+            if (keyOrValue.get(TYPE) == null) {
+                schema = getSchemaFromDataType(keyOrValue.get(VALUE));
+            } else {
+                schema = schemaFromTypeName(keyOrValue.get(TYPE).toString(), structName);
+            }
             if (schema.type() == Schema.Type.STRUCT) {
                 schema = buildSchemaFromObject(structName, (HashMap<String, Object>)keyOrValue.get(DATA));
             }
@@ -38,13 +54,12 @@ public class PyJavaIO {
         return schema;
     }
 
-    static Object getDataFromSourceRecord(HashMap<String, Object> keyOrValue, Schema dataSchema) {
+    static Object getDataFromPollResult(HashMap<String, Object> keyOrValue, Schema dataSchema) {
         Object data;
         try {
             if (dataSchema.type() == Schema.Type.STRUCT) {
                 data = populateFieldsDataFromObject(dataSchema, (HashMap<String, Object>)keyOrValue.get(DATA));
             } else {
-                // TODO allow not providing the type (then use the data type)
                 data = castFromTypeHint(keyOrValue.get(DATA), dataSchema);
             }
         } catch (NullPointerException e) {
@@ -59,11 +74,11 @@ public class PyJavaIO {
                                                  ConnectHeaders headers,
                                                  String scriptName) {
 
-        Schema keySchema = getSchemaFromSourceRecord(pollResult.get(KEY), scriptName);
-        Object key = getDataFromSourceRecord(pollResult.get(KEY), keySchema);
+        Schema keySchema = getSchemaFromPollResult(pollResult.get(KEY), scriptName);
+        Object key = getDataFromPollResult(pollResult.get(KEY), keySchema);
 
-        Schema valueSchema = getSchemaFromSourceRecord(pollResult.get(VALUE), scriptName);
-        Object value = getDataFromSourceRecord(pollResult.get(VALUE), valueSchema);
+        Schema valueSchema = getSchemaFromPollResult(pollResult.get(VALUE), scriptName);
+        Object value = getDataFromPollResult(pollResult.get(VALUE), valueSchema);
 
         return new SourceRecord(
                 sourcePartition,
