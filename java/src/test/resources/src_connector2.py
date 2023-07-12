@@ -58,3 +58,12 @@ def all_default_types():
             'bytes': b'\x04\x00'
         }
     }]
+
+def single_item():
+    return {'key': None, 'value': 'Hello'}
+
+def invalid_1():
+    return {'key', 'value', 'Hello'}
+
+def invalid_2():
+    return "hello"

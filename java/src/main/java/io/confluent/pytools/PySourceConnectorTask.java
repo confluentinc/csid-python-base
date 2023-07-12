@@ -15,6 +15,7 @@ import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pemja.core.object.PyObject;
 
 public class PySourceConnectorTask extends SourceTask {
 
@@ -102,12 +103,22 @@ public class PySourceConnectorTask extends SourceTask {
     public List<SourceRecord> poll() throws InterruptedException {
         System.out.println("task.poll()");
 
-        ArrayList<HashMap<String, HashMap<String, Object>>> pyResults = (ArrayList<HashMap<String, HashMap<String, Object>>>)pythonHost.callEntryPoint();
-        if (pyResults == null) {
-            System.out.println("null returned by python, message will be dropped");
+        Object uncastResults = pythonHost.callEntryPoint();
+        if (uncastResults == null) {
+            System.out.println("null returned by python, message(s) will be dropped");
             return null;
         }
-        System.out.println("returned by python: " + pyResults.toString());
+        System.out.println("returned by python: " + uncastResults.toString());
+
+        // we allow to receive a list or just a single element
+        ArrayList<HashMap<String, HashMap<String, Object>>> pyResults = new ArrayList<>();;
+        if (uncastResults instanceof ArrayList) {
+            pyResults = (ArrayList<HashMap<String, HashMap<String, Object>>>)uncastResults;
+        } else if (uncastResults instanceof HashMap) {
+            pyResults.add((HashMap<String, HashMap<String, Object>>)uncastResults);
+        } else {
+            return null; // TODO check if we need to throw an exception instead
+        }
 
 /*
         if (maxInterval > 0) {

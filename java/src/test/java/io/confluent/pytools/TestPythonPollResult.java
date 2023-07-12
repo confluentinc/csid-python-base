@@ -60,7 +60,7 @@ class TestPythonPollResult {
         assertEquals(3, records.size());
 
         SourceRecord record = records.get(0);
-        assertEquals(record.value().toString(), "some string");
+        assertEquals(record.value(), "some string");
         assertEquals(record.key(), 1234L);
         assertTrue(record.key() instanceof java.lang.Long);
 
@@ -148,13 +148,39 @@ class TestPythonPollResult {
         assertNull(record.key());
     }
 
+    @SneakyThrows
+    @Test
+    void single() {
+        createPythonTask("init", "src_connector2.single_item");
+        generateRecords(1);
+        assertEquals(1, records.size());
+
+        SourceRecord record = records.get(0);
+        assertEquals(record.value(), "Hello");
+        assertNull(record.key());
+    }
+
+    @SneakyThrows
+    @Test
+    void invalid() {
+        createPythonTask("init", "src_connector2.invalid_1");
+        generateRecords(1);
+
+        createPythonTask("init", "src_connector2.invalid_2");
+        generateRecords(1);
+
+        assertEquals(0, records.size());
+    }
 
     private void generateRecords(int numMessages) throws Exception {
         records.clear();
         while (records.size() < numMessages) {
             List<SourceRecord> newRecords = task.poll();
-            assertNotNull(newRecords);
-            records.addAll(newRecords);
+            if (newRecords != null) {
+                records.addAll(newRecords);
+            } else {
+                return;
+            }
         }
     }
 
