@@ -163,7 +163,7 @@ The `poll()` method has the following signature:
 
 `def poll(offsets)`
 
-- offset: the offsets (as a `dict<string, string>`). See below (TODO).
+- offset: the offsets (as a `dict<string, string>`). See next section for details.
 
 The `poll()` method can return either a list of records (described below) or a single one. 
 
@@ -176,7 +176,7 @@ For example:
 ```python
 
 # key and value as a single basic type
-def poll_basic_types():
+def poll_basic_types(offsets):
     return [{
         'key': 1234,
         'value': "some string"
@@ -186,7 +186,7 @@ def poll_basic_types():
     }]
 
 # key and value are objects/dicts
-def poll_objects():
+def poll_objects(offsets):
     return [{
         'key': {
             'id': 1234,
@@ -210,7 +210,7 @@ def poll_objects():
     }]
 
 # keys or values are optional
-def poll_no_key():
+def poll_no_key(offsets):
     return [{
         'key': None,
         'value': "some string"
@@ -221,7 +221,7 @@ def poll_no_key():
 
 
 # a single record can be returned
-def poll_single():
+def poll_single(offsets):
     return {
         'key': None,
         'value': "some string"
@@ -239,6 +239,40 @@ From the python data, java stores the corresponding basic types:
 - Python bools become `Boolean` java objects.
 
 The `poll()` method can return `None` (java: `null`) if there's nothing to produce at the time of the call. The method will be called again later.
+
+### Offset management
+
+In addition to the `key` and `value` members, the records returned by the python `poll()` method can have an optional `offset` member.
+
+The latest value of the offset returned by the `poll()` is stored by the Connect framework and passed to the `init()` method and at each invocation of the `poll()` method. 
+
+This allows the connectors to resume work where they were in case the connector is stopped. 
+
+For example:
+```python
+def poll_basic_types(offsets):
+    print("offsets:")
+    print(offsets)
+    
+    return [{
+        'key': 1234,
+        'value': 'some string',
+        'offset': 123
+    },{
+        'key':  4567,
+        'value':  'another string',
+        'offset': 124
+    }]
+```
+
+`print(offsets)` above returns:
+```python
+offsets:
+{'latest': 122}
+```
+
+It can be of any basic type. 
+If a batch has several records but not all of them have `offset` members, the last one in the batch will be recorded as the latest (even though it may not be associated with the last record in the batch). 
 
 ### Config properties
 

@@ -6,39 +6,29 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import lombok.SneakyThrows;
-import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.header.ConnectHeaders;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pemja.core.object.PyObject;
 
 public class PySourceConnectorTask extends SourceTask {
 
     static final Logger log = LoggerFactory.getLogger(PySourceConnectorTask.class);
 
-    private static final Schema DEFAULT_KEY_SCHEMA = Schema.OPTIONAL_STRING_SCHEMA;
     public static final String TASK_ID = "task.id";
-    public static final String TASK_GENERATION = "task.generation";
-    public static final String CURRENT_ITERATION = "current.iteration";
-    public static final String RANDOM_SEED = "random.seed";
 
     private String topic;
-    private long maxInterval;
-    private int maxRecords;
-    private long count = 0L;
     private int taskId;
     private Map<String, Object> sourcePartition;
-    private long taskGeneration;
-    private final Random random = new Random();
 
     private PythonHost pythonHost;
     private String jsonPrivateSettings;
     private String scriptName;
+
+    private Map<String, Object> offsets;
 
 
     @Override
@@ -62,6 +52,8 @@ public class PySourceConnectorTask extends SourceTask {
         String localDependenciesDir = config.getOfflineInstallPath();
 
         topic = config.getKafkaTopic();
+        taskId = Integer.parseInt(props.get(TASK_ID));
+        sourcePartition = Collections.singletonMap(TASK_ID, taskId);
 
         System.out.println("initializing the python environment");
 
@@ -77,25 +69,15 @@ public class PySourceConnectorTask extends SourceTask {
 
         pythonHost = new PythonHost(pythonExecutable, Paths.get(scriptsDir).toFile(), entryPoint, workingDirectory, localDependenciesDir);
 
-        // call a configure() function in python?
-        if (!initMethod.equals("")) {
-            pythonHost.callPythonMethod(initMethod, jsonPrivateSettings);
-            System.out.println("calling the init method: " + initMethod);
+        offsets = context.offsetStorageReader().offset(sourcePartition);
+        if (offsets == null) {
+            offsets = new HashMap<>();
         }
 
-        maxInterval = config.getMaxInterval();
-        maxRecords = config.getIterations();
-
-        taskGeneration = 0;
-        taskId = Integer.parseInt(props.get(TASK_ID));
-        sourcePartition = Collections.singletonMap(TASK_ID, taskId);
-
-        Map<String, Object> offset = context.offsetStorageReader().offset(sourcePartition);
-        if (offset != null) {
-            //  The offset as it is stored contains our next state, so restore it as-is.
-            taskGeneration = ((Long) offset.get(TASK_GENERATION)).intValue();
-            count = ((Long) offset.get(CURRENT_ITERATION));
-            random.setSeed((Long) offset.get(RANDOM_SEED));
+        // call a configure() function in python?
+        if (!initMethod.equals("")) {
+            pythonHost.callPythonMethod(initMethod, jsonPrivateSettings, offsets);
+            System.out.println("calling the init method: " + initMethod);
         }
     }
 
@@ -103,7 +85,7 @@ public class PySourceConnectorTask extends SourceTask {
     public List<SourceRecord> poll() throws InterruptedException {
         System.out.println("task.poll()");
 
-        Object uncastResults = pythonHost.callEntryPoint();
+        Object uncastResults = pythonHost.callEntryPoint(offsets);
         if (uncastResults == null) {
             System.out.println("null returned by python, message(s) will be dropped");
             return null;
@@ -122,20 +104,6 @@ public class PySourceConnectorTask extends SourceTask {
         }
 
 /*
-        if (maxInterval > 0) {
-            try {
-                Thread.sleep((long) (maxInterval * Math.random()));
-            } catch (InterruptedException e) {
-                Thread.interrupted();
-                return null;
-            }
-        }
-
-        // Key + Value
-        SchemaAndValue key = new SchemaAndValue(DEFAULT_KEY_SCHEMA, null);
-        String formattedString = String.format("%.02f", random.nextFloat());
-        SchemaAndValue value = new SchemaAndValue(DEFAULT_KEY_SCHEMA, formattedString);
-
         if (maxRecords > 0 && count >= maxRecords) {
             throw new ConnectException(
                     String.format("Stopping connector: generated the configured %d number of messages", count)
@@ -143,32 +111,18 @@ public class PySourceConnectorTask extends SourceTask {
         }
 */
 
-        // Re-seed the random each time so that we can save the seed to the source offsets.
-        long seed = random.nextLong();
-        random.setSeed(seed);
-
-        // The source offsets will be the values that the next task lifetime will restore from
-        // Essentially, the "next" state of the connector after this loop completes
-        Map<String, Object> sourceOffset = new HashMap<>();
-        // The next lifetime will be a member of the next generation.
-        sourceOffset.put(TASK_GENERATION, taskGeneration + 1);
-        // We will have produced this record
-        sourceOffset.put(CURRENT_ITERATION, count + 1);
-        // This is the seed that we just re-seeded for our own next iteration.
-        sourceOffset.put(RANDOM_SEED, seed);
+        // refresh the offsets from the last 'offset' key of the py results
+        offsets = new HashMap<>();
+        offsets.put("latest", PythonPollResult.getLatestOffsetFromBatch(pyResults));
 
         final ConnectHeaders headers = new ConnectHeaders();
-        headers.addLong(TASK_GENERATION, taskGeneration);
         headers.addLong(TASK_ID, taskId);
-        headers.addLong(CURRENT_ITERATION, count);
 
         final List<SourceRecord> records = new ArrayList<>();
         for (HashMap<String, HashMap<String, Object>> rawResult: pyResults) {
             PythonPollResult pyResult = new PythonPollResult(rawResult, scriptName);
-            records.add(pyResult.toSourceRecord(sourcePartition, sourceOffset, topic, headers));
-            // records.add(PyJavaIO.pollResultToSourceRecord(rawResult, sourcePartition, sourceOffset, topic, headers, scriptName));
+            records.add(pyResult.toSourceRecord(sourcePartition, offsets, topic, headers));
         }
-        count += records.size();
         return records;
     }
 
@@ -176,5 +130,9 @@ public class PySourceConnectorTask extends SourceTask {
     public void stop() {
         System.out.println("task.stop()");
         // TODO create config + call a python method
+    }
+
+    public Map<String, Object> getOffsets() {
+        return offsets;
     }
 }

@@ -6,6 +6,7 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.source.SourceRecord;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +19,17 @@ public class PythonPollResult {
 
     final static String KEY = "key";
     final static String VALUE = "value";
+    final static String OFFSET = "offset";
+
+    public static Object getLatestOffsetFromBatch(ArrayList<HashMap<String, HashMap<String, Object>>> rawResults) {
+        Object latest = null;
+        for (HashMap<String, HashMap<String, Object>> rawResult: rawResults) {
+            if (rawResult.get(OFFSET) != null) {
+                latest = rawResult.get(OFFSET);
+            }
+        }
+        return latest;
+    }
 
     // TODO support for nested types
     // pemja casts python ints into longs (INT64) and floats into doubles (FLOAT64)

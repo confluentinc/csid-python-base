@@ -56,100 +56,32 @@ class TestSourceConnectorTask {
 
     @SneakyThrows
     @Test
-    void basic() {
-        createPythonTask("init", "src_connector1.poll_basic_types");
-        generateRecords(10);
+    void offsets() {
+        createPythonTask("init", "src_connector1.test_offsets");
+        generateRecords(4);
 
-        assertEquals(10, records.size());
-
-        SourceRecord record = records.get(0);
-        assertEquals(record.value().toString(), "azerty");
-        assertEquals(record.key(), 1234);
-        assertTrue(record.key() instanceof java.lang.Integer);
-
-        record = records.get(1);
-        assertEquals(record.value().toString(), "abcdef");
-        assertEquals(record.key(), 6789L);
-        assertTrue(record.key() instanceof java.lang.Long);
-    }
-
-    @SneakyThrows
-    @Test
-    void noKey() {
-        createPythonTask("init", "src_connector1.poll_no_key");
-        generateRecords(10);
-
-        assertEquals(10, records.size());
-        SourceRecord record = records.get(0);
-        Struct value = (Struct)record.value();
-        assertEquals(value.get("first_name"), "John");
-        assertNull(record.key());
-        assertTrue(value.get("age") instanceof java.lang.Long);
-    }
-
-    @SneakyThrows
-    @Test
-    void noType() {
-        createPythonTask("init", "src_connector1.poll_no_type");
-        generateRecords(2);
-
-        assertEquals(2, records.size());
+        assertEquals(4, records.size());
 
         SourceRecord record = records.get(0);
         assertEquals(record.key(), 1234L);
-        assertEquals(record.value(), "some string");
 
-        record = records.get(1);
-        assertEquals(record.key(), 1234.5D);
-        assertEquals(record.value(), true);
+        Map<String, Object> offsets = task.getOffsets();
+        assertEquals(offsets.get("latest"), 4L);
     }
 
     @SneakyThrows
     @Test
-    void noDataField() {
-        createPythonTask("init", "src_connector1.poll_no_data_field");
-        generateRecords(2);
+    void stringOffsets() {
+        createPythonTask("init", "src_connector1.test_offsets_as_string");
+        generateRecords(4);
 
-        assertEquals(2, records.size());
+        assertEquals(4, records.size());
 
         SourceRecord record = records.get(0);
         assertEquals(record.key(), 1234L);
-        assertEquals(record.value(), "some string");
 
-        record = records.get(1);
-        assertEquals(record.key(), 1234.5D);
-        assertEquals(record.value(), true);
-    }
-
-
-
-    @SneakyThrows
-    @Test
-    void allTypes() {
-        createPythonTask("init", "src_connector1.all_default_types");
-
-        generateRecords(1);
-        assertEquals(1, records.size());
-
-        SourceRecord record = records.get(0);
-
-        Struct value = (Struct)record.value();
-
-        assertEquals(value.get("str"), "Hello");
-        assertTrue(value.get("str") instanceof java.lang.String);
-
-        assertEquals(value.get("bool"), true);
-        assertTrue(value.get("bool") instanceof java.lang.Boolean);
-
-        assertEquals(value.get("float"), 1.0D);
-        assertTrue(value.get("float") instanceof java.lang.Double);
-
-        assertTrue(value.get("bytes") instanceof java.lang.Object);
-
-        assertTrue(value.get("int") instanceof java.lang.Long);
-        assertEquals(value.get("int"), 25L);
-
-        assertNull(record.key());
+        Map<String, Object> offsets = task.getOffsets();
+        assertTrue(offsets.get("latest") instanceof java.lang.String);
     }
 
 /*

@@ -1,10 +1,13 @@
 import json
 
-def init(settings):
+def init(settings, offsets):
     print("source connector init() in python")
+    print("settings:")
     print(json.loads(settings))
+    print("offsets:")
+    print(offsets)
 
-def poll_basic_types():
+def poll_basic_types(offsets):
     return [{
         'key': 1234,
         'value': "some string"
@@ -23,7 +26,7 @@ def poll_basic_types():
     }]
 
 
-def poll_key_and_value_both_objects():
+def poll_key_and_value_both_objects(offsets):
     return [{
         'key': {
             'id': 1234,
@@ -47,7 +50,7 @@ def poll_key_and_value_both_objects():
     }]
 
 
-def all_default_types():
+def all_default_types(offsets):
     return [{
         'key': None,
         'value': {
@@ -59,11 +62,11 @@ def all_default_types():
         }
     }]
 
-def single_item():
+def single_item(offsets):
     return {'key': None, 'value': 'Hello'}
 
-def invalid_1():
+def invalid_1(offsets):
     return {'key', 'value', 'Hello'}
 
-def invalid_2():
+def invalid_2(offsets):
     return "hello"
