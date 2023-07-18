@@ -53,8 +53,8 @@ public class PySourceConnectorConfig extends AbstractConfig {
                 .define(SCRIPTS_DIR_CONF, Type.STRING, NO_DEFAULT_VALUE, new NonNullValidator(), Importance.HIGH, SCRIPTS_DIR_DOC)
                 .define(WORKING_DIR_CONF, Type.STRING, "", new NonNullValidator(), Importance.MEDIUM, WORKING_DIR_DOC)
                 .define(ENTRY_POINT_CONF, Type.STRING, NO_DEFAULT_VALUE, new NonNullValidator(), Importance.HIGH, ENTRY_POINT_DOC)
-                .define(CONFIGURE_CONF, Type.STRING, NO_DEFAULT_VALUE, new NonNullValidator(), Importance.MEDIUM, CONFIGURE_DOC)
-                .define(SETTINGS_CONF, Type.STRING, NO_DEFAULT_VALUE, new NonNullValidator(), Importance.LOW, SETTINGS_DOC)
+                .define(CONFIGURE_CONF, Type.STRING, "", new NonNullValidator(), Importance.MEDIUM, CONFIGURE_DOC)
+                .define(SETTINGS_CONF, Type.STRING, "", new NonNullValidator(), Importance.LOW, SETTINGS_DOC)
                 .define(OFFLINE_INSTALL_CONF, Type.STRING, "", new NonNullValidator(), Importance.LOW, OFFLINE_INSTALL_DOC);
     }
 
