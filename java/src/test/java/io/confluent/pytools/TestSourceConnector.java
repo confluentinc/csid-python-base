@@ -1,5 +1,8 @@
 package io.confluent.pytools;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,11 +17,14 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TestSourceConnector {
+    @TempDir
+    File tempDir;
 
     private static final String TOPIC = "my-topic";
     private static final int NUM_MESSAGES = 10;
@@ -31,8 +37,15 @@ class TestSourceConnector {
     void setUp() throws Exception {
         config = new HashMap<>();
         config.put(PySourceConnectorConfig.KAFKA_TOPIC_CONF, TOPIC);
-        config.put(PySourceConnectorConfig.ITERATIONS_CONF, Integer.toString(NUM_MESSAGES));
-        config.put(PySourceConnectorConfig.MAXINTERVAL_CONF, Integer.toString(MAX_INTERVAL_MS));
+
+        Path scriptsDirectory = Paths.get("src","test", "resources");
+        config.putIfAbsent(PySourceConnectorConfig.SCRIPTS_DIR_CONF, scriptsDirectory.toString());
+        config.putIfAbsent(PySourceConnectorConfig.WORKING_DIR_CONF, tempDir.toString());
+
+        config.putIfAbsent(PySourceConnectorConfig.CONFIGURE_CONF, "initMethod");
+        config.putIfAbsent(PySourceConnectorConfig.ENTRY_POINT_CONF, "entryPoint");
+        config.putIfAbsent(PySourceConnectorConfig.SETTINGS_CONF, "{\"conf1\":\"value1\", \"conf2\":\"value2\"}");
+
         connector = new PySourceConnector();
     }
 

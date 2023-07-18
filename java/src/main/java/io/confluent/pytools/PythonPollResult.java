@@ -21,7 +21,7 @@ public class PythonPollResult {
     final static String VALUE = "value";
     final static String OFFSET = "offset";
 
-    public static Object getLatestOffsetFromBatch(ArrayList<HashMap<String, HashMap<String, Object>>> rawResults) {
+    public static Object getLatestOffset(ArrayList<HashMap<String, HashMap<String, Object>>> rawResults) {
         Object latest = null;
         for (HashMap<String, HashMap<String, Object>> rawResult: rawResults) {
             if (rawResult.get(OFFSET) != null) {

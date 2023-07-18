@@ -18,16 +18,6 @@ public class PySourceConnectorConfig extends AbstractConfig {
 
     public static final String KAFKA_TOPIC_CONF = "kafka.topic";
     private static final String KAFKA_TOPIC_DOC = "Topic to write to";
-    public static final String MAXINTERVAL_CONF = "max.interval";
-    private static final String MAXINTERVAL_DOC = "Max interval between messages (ms)";
-    public static final String ITERATIONS_CONF = "iterations";
-    private static final String ITERATIONS_DOC = "Number of messages to send from each task, "
-            + "or less than 1 for unlimited";
-    public static final String RANDOM_SEED_CONF = "random.seed";
-    private static final String RANDOM_SEED_DOC = "Numeric seed for generating random data. "
-            + "Two connectors started with the same seed will deterministically produce the same data. "
-            + "Each task will generate different data than the other tasks in the same connector.";
-
     public static final String PYTHON_PATH_CONF = "python.path";
     public static final String PYTHON_PATH_DOC = "Path of the python3 executable to build the virtual environment from. " +
             "If empty, the default python3 executable from the system is taken.";
@@ -59,9 +49,6 @@ public class PySourceConnectorConfig extends AbstractConfig {
     public static ConfigDef conf() {
         return new ConfigDef()
                 .define(KAFKA_TOPIC_CONF, Type.STRING, Importance.HIGH, KAFKA_TOPIC_DOC)
-                .define(MAXINTERVAL_CONF, Type.LONG, 500L, Importance.HIGH, MAXINTERVAL_DOC)
-                .define(ITERATIONS_CONF, Type.INT, -1, Importance.HIGH, ITERATIONS_DOC)
-
                 .define(PYTHON_PATH_CONF, Type.STRING, "", new NonNullValidator(), Importance.HIGH, PYTHON_PATH_DOC)
                 .define(SCRIPTS_DIR_CONF, Type.STRING, NO_DEFAULT_VALUE, new NonNullValidator(), Importance.HIGH, SCRIPTS_DIR_DOC)
                 .define(WORKING_DIR_CONF, Type.STRING, "", new NonNullValidator(), Importance.MEDIUM, WORKING_DIR_DOC)
@@ -74,14 +61,6 @@ public class PySourceConnectorConfig extends AbstractConfig {
     public String getKafkaTopic() {
         return this.getString(KAFKA_TOPIC_CONF);
     }
-    public Long getMaxInterval() {
-        return this.getLong(MAXINTERVAL_CONF);
-    }
-    public Integer getIterations() {
-        return this.getInt(ITERATIONS_CONF);
-    }
-    public Long getRandomSeed() { return this.getLong(RANDOM_SEED_CONF);}
-
     public String getPythonPath() { return this.getString(PYTHON_PATH_CONF);}
     public String getScriptsDir() { return this.getString(SCRIPTS_DIR_CONF);}
     public String getWorkingDir() { return this.getString(WORKING_DIR_CONF);}

@@ -163,8 +163,6 @@ class TestSourceConnectorTask {
 
     private void createPythonTask(String initMethod, String entryPoint) {
         config.putIfAbsent(PySourceConnectorConfig.KAFKA_TOPIC_CONF, TOPIC);
-        config.putIfAbsent(PySourceConnectorConfig.ITERATIONS_CONF, Integer.toString(NUM_MESSAGES));
-        config.putIfAbsent(PySourceConnectorConfig.MAXINTERVAL_CONF, Integer.toString(MAX_INTERVAL_MS));
         config.putIfAbsent(PySourceConnectorTask.TASK_ID, Integer.toString(TASK_ID));
 
         Path scriptsDirectory = Paths.get("src","test", "resources");

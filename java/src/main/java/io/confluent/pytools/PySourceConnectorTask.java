@@ -6,13 +6,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import lombok.SneakyThrows;
+import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.header.ConnectHeaders;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pemja.core.object.PyObject;
 
 public class PySourceConnectorTask extends SourceTask {
 
@@ -113,7 +116,7 @@ public class PySourceConnectorTask extends SourceTask {
 
         // refresh the offsets from the last 'offset' key of the py results
         offsets = new HashMap<>();
-        offsets.put("latest", PythonPollResult.getLatestOffsetFromBatch(pyResults));
+        offsets.put("latest", PythonPollResult.getLatestOffset(pyResults));
 
         final ConnectHeaders headers = new ConnectHeaders();
         headers.addLong(TASK_ID, taskId);
