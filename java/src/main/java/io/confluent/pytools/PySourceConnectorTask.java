@@ -64,6 +64,7 @@ public class PySourceConnectorTask extends SourceTask {
         if (!pythonExe.equals("")) {
             pythonExecutable = pythonExe;
         }
+        System.out.println("python exe: " + pythonExecutable);
 
         String workingDirectory = scriptsDir;
         if (!workingDir.equals("")) {

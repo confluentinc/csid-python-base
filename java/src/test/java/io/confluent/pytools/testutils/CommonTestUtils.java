@@ -54,7 +54,7 @@ import org.testcontainers.utility.DockerImageName;
 @RequiredArgsConstructor
 public class CommonTestUtils {
 
-  private static final String KAFKA_CONTAINER_VERSION = "7.2.0";
+  private static final String KAFKA_CONTAINER_VERSION = "7.4.1";
 
   private static final String CONNECT_TEMP_FILE = "connect_temp_file";
 

@@ -40,7 +40,7 @@ class TestSourceConnector {
 
         Path scriptsDirectory = Paths.get("src","test", "resources");
         config.putIfAbsent(PySourceConnectorConfig.SCRIPTS_DIR_CONF, scriptsDirectory.toString());
-        config.putIfAbsent(PySourceConnectorConfig.WORKING_DIR_CONF, tempDir.toString());
+        // config.putIfAbsent(PySourceConnectorConfig.WORKING_DIR_CONF, tempDir.toString());
 
         config.putIfAbsent(PySourceConnectorConfig.CONFIGURE_CONF, "initMethod");
         config.putIfAbsent(PySourceConnectorConfig.ENTRY_POINT_CONF, "entryPoint");

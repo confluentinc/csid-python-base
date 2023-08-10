@@ -51,7 +51,7 @@ public class PythonHost {
         List<String> pipRequirements = new ArrayList<>();
         File[] requirements = scriptsDirectory.listFiles(
                 (dir, name) -> name.equalsIgnoreCase("requirements.txt"));
-        if (requirements != null) {
+        if (requirements != null && requirements.length > 0) {
             File req = requirements[0];
             pipRequirements = Files.readAllLines(req.toPath(), StandardCharsets.UTF_8);
         }

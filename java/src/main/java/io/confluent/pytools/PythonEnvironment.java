@@ -100,7 +100,7 @@ public class PythonEnvironment {
 
         ArrayList<String> pipInstallCommand = new ArrayList<>(List.of(new String[]{pythonExecutable, "-m", "pip", "install"}));
         pipInstallCommand.addAll(List.of(requirements));
-        if (localDependenciesDirectory != null) {
+        if (localDependenciesDirectory != null && localDependenciesDirectory.trim().length() > 0) {
             pipInstallCommand.addAll(List.of("--find-links", localDependenciesDirectory));
         }
 
