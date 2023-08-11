@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.connect.data.Struct;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -48,12 +50,15 @@ public class TestEnd2End extends KafkaConnectBase {
 
         postConnector(connectorConfigText);
 
-        try (KafkaConsumer<String, String> consumer = getConsumer()) {
+        try (KafkaConsumer<Long, String> consumer = getConsumer1()) {
             consumer.subscribe(Arrays.asList(topicName));
-            List<ConsumerRecord<String, String>> messages = drain(consumer, 10);
+            List<ConsumerRecord<Long, String>> messages = drainLongString(consumer, 3);
 
             String firstValue = messages.get(0).value();
+            Long firstKey = messages.get(0).key();
+
             Assertions.assertTrue(firstValue.contains("some string"));
+            Assertions.assertTrue(firstKey > 0);
         }
 
     }

@@ -107,14 +107,6 @@ public class PySourceConnectorTask extends SourceTask {
             return null; // TODO check if we need to throw an exception instead
         }
 
-/*
-        if (maxRecords > 0 && count >= maxRecords) {
-            throw new ConnectException(
-                    String.format("Stopping connector: generated the configured %d number of messages", count)
-            );
-        }
-*/
-
         // refresh the offsets from the last 'offset' key of the py results
         offsets = new HashMap<>();
         offsets.put("latest", PythonPollResult.getLatestOffset(pyResults));

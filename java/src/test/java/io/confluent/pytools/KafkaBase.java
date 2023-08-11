@@ -13,6 +13,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.BeforeAll;
 import org.rnorth.ducttape.unreliables.Unreliables;
@@ -73,8 +74,21 @@ public class KafkaBase {
                     put(ConsumerConfig.GROUP_ID_CONFIG, "tc-" + UUID.randomUUID());
                     put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
                     put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+                    put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
                 }},
                 new StringDeserializer(), new StringDeserializer());
+    }
+
+    protected KafkaConsumer<Long, String> getConsumer1() {
+        return new KafkaConsumer<>(
+                new HashMap<>() {{
+                    put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
+                    put(ConsumerConfig.GROUP_ID_CONFIG, "tc-" + UUID.randomUUID());
+                    put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+                    put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.LongDeserializer");
+                    put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+                }},
+                new LongDeserializer(), new StringDeserializer());
     }
 
     protected KafkaConsumer<String, byte[]> getEncryptionConsumer(String plaintextProperties) {
@@ -110,6 +124,23 @@ public class KafkaBase {
             int expectedRecordCount) {
 
         List<ConsumerRecord<String, String>> allRecords = new ArrayList<>();
+
+        Unreliables.retryUntilTrue(200, TimeUnit.SECONDS, () -> {
+            consumer.poll(Duration.ofMillis(2000))
+                    .iterator()
+                    .forEachRemaining(allRecords::add);
+
+            return allRecords.size() == expectedRecordCount;
+        });
+        LOGGER.info("Received records:\n{}", allRecords);
+        return allRecords;
+    }
+
+    protected List<ConsumerRecord<Long, String>> drainLongString(
+            KafkaConsumer<Long, String> consumer,
+            int expectedRecordCount) {
+
+        List<ConsumerRecord<Long, String>> allRecords = new ArrayList<>();
 
         Unreliables.retryUntilTrue(200, TimeUnit.SECONDS, () -> {
             consumer.poll(Duration.ofMillis(2000))
