@@ -119,6 +119,7 @@ public class PySourceConnectorTask extends SourceTask {
             PythonPollResult pyResult = new PythonPollResult(rawResult, scriptName);
             records.add(pyResult.toSourceRecord(sourcePartition, offsets, topic, headers));
         }
+        System.out.println("java poll() produced " + records.size() + " record(s)");
         return records;
     }
 

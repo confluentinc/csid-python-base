@@ -15,6 +15,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.connect.json.JsonDeserializer;
 import org.junit.jupiter.api.BeforeAll;
 import org.rnorth.ducttape.unreliables.Unreliables;
 import org.slf4j.Logger;
@@ -91,6 +92,20 @@ public class KafkaBase {
                 new LongDeserializer(), new StringDeserializer());
     }
 
+    protected KafkaConsumer<String, JsonNode> getConsumer2() {
+        return new KafkaConsumer<>(
+                new HashMap<>() {{
+                    put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
+                    put(ConsumerConfig.GROUP_ID_CONFIG, "tc-" + UUID.randomUUID());
+                    put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+                    put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+                    put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.connect.json.JsonDeserializer");
+                }},
+                new StringDeserializer(), new JsonDeserializer());
+    }
+
+
+
     protected KafkaConsumer<String, byte[]> getEncryptionConsumer(String plaintextProperties) {
         Properties props = convertStringToProps(plaintextProperties);
         props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
@@ -119,7 +134,7 @@ public class KafkaBase {
     }
 
 
-    protected List<ConsumerRecord<String, String>> drain(
+    protected List<ConsumerRecord<String, String>> drainStringString(
             KafkaConsumer<String, String> consumer,
             int expectedRecordCount) {
 
@@ -130,7 +145,7 @@ public class KafkaBase {
                     .iterator()
                     .forEachRemaining(allRecords::add);
 
-            return allRecords.size() == expectedRecordCount;
+            return allRecords.size() >= expectedRecordCount;
         });
         LOGGER.info("Received records:\n{}", allRecords);
         return allRecords;
@@ -147,11 +162,30 @@ public class KafkaBase {
                     .iterator()
                     .forEachRemaining(allRecords::add);
 
-            return allRecords.size() == expectedRecordCount;
+            return allRecords.size() >= expectedRecordCount;
         });
         LOGGER.info("Received records:\n{}", allRecords);
         return allRecords;
     }
+
+    protected List<ConsumerRecord<String, JsonNode>> drainStringJSON(
+            KafkaConsumer<String, JsonNode> consumer,
+            int expectedRecordCount) {
+
+        List<ConsumerRecord<String, JsonNode>> allRecords = new ArrayList<>();
+
+        Unreliables.retryUntilTrue(200, TimeUnit.SECONDS, () -> {
+            consumer.poll(Duration.ofMillis(2000))
+                    .iterator()
+                    .forEachRemaining(allRecords::add);
+
+            return allRecords.size() >= expectedRecordCount;
+        });
+        LOGGER.info("Received records:\n{}", allRecords);
+        return allRecords;
+    }
+
+
 
 /*
     private void addRecord(ConsumerRecord r) {

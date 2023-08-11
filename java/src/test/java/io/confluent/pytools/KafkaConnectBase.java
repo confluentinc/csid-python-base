@@ -16,9 +16,7 @@ import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
-import java.io.Serializable;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.stream.Stream;
 
 import static io.restassured.RestAssured.given;
@@ -55,7 +53,9 @@ public class KafkaConnectBase extends KafkaBase {
                 .withEnv("CONNECT_PLUGIN_PATH", "/usr/share/confluent-hub-components,/etc/kafka-connect/jars/")
                 .withCopyFileToContainer(MountableFile.forClasspathResource("connect-start.sh", 0777),
                         "/usr/share/connect-start.sh")
-                .withCopyFileToContainer(MountableFile.forClasspathResource("end2end.py", 0777),
+                .withCopyFileToContainer(MountableFile.forClasspathResource("end2end_1.py", 0777),
+                        "/app/")
+                .withCopyFileToContainer(MountableFile.forClasspathResource("end2end_2.py", 0777),
                         "/app/")
                 .withSnapshotJars("/Users/laurent/Repositories/csid-python-base")
                 .withPlugins(libTempDir.toString());
