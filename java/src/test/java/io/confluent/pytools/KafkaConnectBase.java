@@ -23,7 +23,7 @@ import static io.restassured.RestAssured.given;
 
 
 public class KafkaConnectBase extends KafkaBase {
-    protected static final String CONNECT_IMAGE = "connect-with-devtools:1.0.11"; // "confluentinc/cp-kafka-connect:7.4.1";
+    protected static final String CONNECT_IMAGE = "ldom/connect-with-devtools:latest"; // "confluentinc/cp-kafka-connect:7.4.1";
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConnectBase.class);
     @TempDir
     static Path libTempDir;
@@ -57,7 +57,7 @@ public class KafkaConnectBase extends KafkaBase {
                         "/app/")
                 .withCopyFileToContainer(MountableFile.forClasspathResource("end2end_2.py", 0777),
                         "/app/")
-                .withSnapshotJars("/Users/laurent/Repositories/csid-python-base")
+                .withSnapshotJars("..") // was /Users/laurent/Repositories/csid-python-base
                 .withPlugins(libTempDir.toString());
 
         Startables.deepStart(Stream.of(

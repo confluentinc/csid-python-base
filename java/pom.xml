@@ -23,7 +23,7 @@
         <common.io.version>2.11.0</common.io.version>
         <jinjava.version>2.7.0</jinjava.version>
         <kafka.compile.version>3.4.1</kafka.compile.version>
-        <testcontainers.version>1.17.5</testcontainers.version>
+        <testcontainers.version>1.18.3</testcontainers.version>
         <junit.version>5.8.2</junit.version>
         <lombok.version>1.18.22</lombok.version>
         <confluentconnect.version>7.2.0</confluentconnect.version>

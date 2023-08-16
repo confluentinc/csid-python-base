@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class TestEnd2End extends KafkaConnectBase {
     @Test
