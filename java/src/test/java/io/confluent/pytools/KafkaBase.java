@@ -168,9 +168,9 @@ public class KafkaBase {
         return allRecords;
     }
 
-    protected List<ConsumerRecord<String, JsonNode>> drainStringJSON(
+    protected List<ConsumerRecord<String, JsonNode>> consumeStringJSON(
             KafkaConsumer<String, JsonNode> consumer,
-            int expectedRecordCount) {
+            int recordCount) {
 
         List<ConsumerRecord<String, JsonNode>> allRecords = new ArrayList<>();
 
@@ -179,7 +179,7 @@ public class KafkaBase {
                     .iterator()
                     .forEachRemaining(allRecords::add);
 
-            return allRecords.size() >= expectedRecordCount;
+            return allRecords.size() >= recordCount;
         });
         LOGGER.info("Received records:\n{}", allRecords);
         return allRecords;

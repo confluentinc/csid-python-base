@@ -57,6 +57,12 @@ public class KafkaConnectBase extends KafkaBase {
                         "/app/")
                 .withCopyFileToContainer(MountableFile.forClasspathResource("end2end_2.py", 0777),
                         "/app/")
+                .withCopyFileToContainer(MountableFile.forClasspathResource("end2end_3.py", 0777),
+                        "/app/")
+                .withCopyFileToContainer(MountableFile.forClasspathResource("speed_traps.py", 0777),
+                        "/app/")
+                .withCopyFileToContainer(MountableFile.forClasspathResource("requirements.txt", 0777),
+                        "/app/")
                 .withSnapshotJars("..") // was /Users/laurent/Repositories/csid-python-base
                 .withPlugins(libTempDir.toString());
 
