@@ -56,6 +56,7 @@ public class TestPyConnectSmt {
         props.put("transforms.myTransform.type", PyConnectSmt.class.getName()); // io.confluent.pytools.PyConnectSmt
 
         Path scriptsDirectory = Paths.get("src","test", "resources");
+        props.put("transforms.myTransform.python.path", "python3.10");
         props.put("transforms.myTransform.scripts.dir", scriptsDirectory.toString());
 
         props.put("transforms.myTransform.working.dir", tempDir.toString());

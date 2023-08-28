@@ -71,7 +71,7 @@ public class PythonEnvironment {
         }
         Path venvPath = Paths.get(workingDirectory.toString(), finalVenvName);
 
-        Path defaultSitePackages = Paths.get(PyUtils.getSitePackages(PyUtils.defaultPythonExecutablePath().toString()));
+        Path defaultSitePackages = Paths.get(PyUtils.getSitePackages(finalPythonExecutablePath.toString()));
         paths.add(defaultSitePackages.toString());
         paths.add(defaultSitePackages.toString().replaceFirst("/lib/", "/lib64/"));
 
