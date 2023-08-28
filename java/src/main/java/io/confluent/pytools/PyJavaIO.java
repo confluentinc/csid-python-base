@@ -106,18 +106,54 @@ public class PyJavaIO {
         }
     }
 
-    static String structToJSON(Object payload) {
+    static String structToJSON(Struct payload) {
         String strVal = payload.toString();
         // quick and dirty Struct to JSON =
+        // 0. export using toString()
         // 1. remove Struct prefix
-        // 2. put everything in quotes
-        // 3. replace = with :
+        // 2. go through the output and put strings in quotes except numbers and bools and structs
+        // 3. replace "=" with ":"
         strVal = strVal.substring(7, strVal.length()-1);
         ArrayList<String> resultItems = new ArrayList<>();
         String[] items = strVal.split(",");
         for (String item: items) {
             String[] keyVals = item.split("=");
-            resultItems.add("\"" + keyVals[0] + "\":\"" + keyVals[1] + "\""); // TODO check array boundaries
+
+            String fieldName = keyVals[0];
+            boolean needsquotes = false;
+            Field currentField = payload.schema().field(fieldName);
+/*
+        TODO make sure every type is handled properly
+
+        INT8,
+        INT16,
+        INT32,
+        INT64,
+        FLOAT32,
+        FLOAT64,
+        BOOLEAN,
+        STRING,
+        BYTES,
+        ARRAY,
+        MAP,
+        STRUCT;
+ */
+            if (currentField.schema().type() == Schema.Type.STRING) {
+                needsquotes = true;
+            }
+
+            Object fieldValue = keyVals[1]; // TODO check array boundaries
+
+            if (currentField.schema().type() == Schema.Type.STRUCT) {
+                fieldValue = structToJSON(payload.getStruct(fieldName));
+            }
+
+            if (needsquotes) {
+                resultItems.add("\"" + fieldName + "\":\"" + fieldValue + "\"");
+            } else {
+                resultItems.add("\"" + fieldName + "\":" + fieldValue);
+            }
+
         }
         String itemsJoined = String.join(",", resultItems);
         return "{" + itemsJoined + "}";
@@ -128,7 +164,7 @@ public class PyJavaIO {
         // if the schema is a Struct, we pass the payload as a JSON String
         // otherwise if it's a basic type, we pass the toString()
         if (schema.contains("STRUCT")) {
-            return structToJSON(payload);
+            return structToJSON((Struct)payload);
         } else {
             return payload;
         }

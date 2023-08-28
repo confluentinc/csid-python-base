@@ -108,15 +108,19 @@ public class VerifiableSourcePairSendingTaskJSON extends SourceTask {
             Map<String, Long> ccOffset = Collections.singletonMap(SEQNO_FIELD, seqno);
 
             Schema valueSchema = SchemaBuilder.struct().name("record")
-                .field("first_name", Schema.STRING_SCHEMA)
-                .field("last_name", Schema.STRING_SCHEMA)
-                .field("age", Schema.INT32_SCHEMA)
-                .build();
+                    .field("first_name", Schema.STRING_SCHEMA)
+                    .field("last_name", Schema.STRING_SCHEMA)
+                    .field("age", Schema.INT32_SCHEMA)
+                    .field("balance", Schema.FLOAT64_SCHEMA)
+                    .field("is_premium", Schema.BOOLEAN_SCHEMA)
+                    .build();
 
             Struct recordValue = new Struct(valueSchema)
-                .put("first_name", "John")
-                .put("last_name", "Doe")
-                .put("age", 25);
+                    .put("first_name", "John")
+                    .put("last_name", "Doe")
+                    .put("age", 25)
+                    .put("balance", 123.45)
+                    .put("is_premium", true);
 
             SourceRecord srcRecord = new SourceRecord(partition, ccOffset, topic,
                     Schema.INT32_SCHEMA, id, valueSchema, recordValue);
