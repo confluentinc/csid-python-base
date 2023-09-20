@@ -39,12 +39,16 @@ public class PythonHost {
 
         // we check that it's a directory
         if (!scriptsDirectory.isDirectory()) {
-            throw new IOException("scriptsDirectory " + scriptsDirectory + " is not a directory.");
+            String msg = "scriptsDirectory " + scriptsDirectory + " is not a directory.";
+            System.out.println("ERROR" + msg);
+            throw new IOException(msg);
         }
 
         File[] files = scriptsDirectory.listFiles();
-        if (files == null) {
-            throw new IOException("scriptsDirectory " + scriptsDirectory + " is empty.");
+        if (files == null || files.length == 0) {
+            String msg = "scriptsDirectory " + scriptsDirectory + " is empty.";
+            System.out.println("ERROR" + msg);
+            throw new IOException(msg);
         }
 
         // any requirements.txt?
@@ -58,10 +62,14 @@ public class PythonHost {
 
         ensurePemjaRequirement(pipRequirements);
 
+        System.out.println("requirements before build: " + pipRequirements);
+
         // search for the file referenced in the entry point
         File[] pythonScripts = scriptsDirectory.listFiles((dir, name) -> name.endsWith(".py"));
-        if (pythonScripts == null) {
-            throw new IOException("scriptsDirectory " + scriptsDirectory + " does not contain python scripts.");
+        if (pythonScripts == null || pythonScripts.length == 0) {
+            String msg = "scriptsDirectory " + scriptsDirectory + " does not contain python scripts.";
+            System.out.println("ERROR" + msg);
+            throw new IOException(msg);
         }
 
         // check the entry point and verify we have the file
@@ -109,7 +117,9 @@ public class PythonHost {
         // analyze entry point
         String[] items = entryPoint.split("\\.");
         if (items.length < 2) {
-            throw new IOException("Entry point " + entryPoint + " doesn't have the <script>.<function> format.");
+            String msg = "Entry point " + entryPoint + " doesn't have the <script>.<function> format.";
+            System.out.println("ERROR" + msg);
+            throw new IOException(msg);
         }
         callableMethod = items[items.length-1];
 
@@ -125,7 +135,14 @@ public class PythonHost {
         // open the file and check that a function with the proper name exists
         List<String> scriptContents;
 
-        scriptContents = Files.readAllLines(targetScript, StandardCharsets.UTF_8);
+        try {
+            scriptContents = Files.readAllLines(targetScript, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            String msg = "Unable to read " + targetScript + ": " + e.toString();
+            System.out.println("ERROR" + msg);
+            throw new IOException(msg);
+        }
+
         boolean found = false;
         for (String line : scriptContents) {
             if (line.trim().startsWith("def " + callableMethod)) {
@@ -134,7 +151,9 @@ public class PythonHost {
             }
         }
         if (!found) {
-            throw new IOException(callableMethod + " function not found in " + targetScript);
+            String msg = callableMethod + " function not found in " + targetScript;
+            System.out.println("ERROR" + msg);
+            throw new IOException(msg);
         }
     }
 

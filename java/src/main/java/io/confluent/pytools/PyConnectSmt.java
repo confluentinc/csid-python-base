@@ -100,11 +100,13 @@ public class PyConnectSmt<R extends ConnectRecord<R>> implements Transformation<
         if (!pythonExe.equals("")) {
             pythonExecutable = pythonExe;
         }
+        System.out.println("python exe: " + pythonExecutable);
 
         String workingDirectory = scriptsDir;
         if (!workingDir.equals("")) {
             workingDirectory = workingDir;
         }
+        System.out.println("working directory: " + workingDirectory);
 
         pythonHost = new PythonHost(pythonExecutable, Paths.get(scriptsDir).toFile(), entryPoint, workingDirectory, localDependenciesDir);
 

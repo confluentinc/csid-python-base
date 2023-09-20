@@ -70,6 +70,7 @@ public class PySourceConnectorTask extends SourceTask {
         if (!workingDir.equals("")) {
             workingDirectory = workingDir;
         }
+        System.out.println("working directory: " + workingDirectory);
 
         pythonHost = new PythonHost(pythonExecutable, Paths.get(scriptsDir).toFile(), entryPoint, workingDirectory, localDependenciesDir);
 
