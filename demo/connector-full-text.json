@@ -10,7 +10,7 @@
     "name": "pytools-demo-full-text",
     "kafka.topic": "test-topic-48664ea7-6f0f-4b58-a80b-7a01b79c7e83",
     "scripts.dir": "/app/",
-    "value.converter": "org.apache.kafka.connect.json.StringConverter",
+    "value.converter": "org.apache.kafka.connect.storage.StringConverter",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter"
   }
 }
