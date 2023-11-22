@@ -20,7 +20,7 @@ import static java.nio.file.Files.readAllLines;
 public class PythonHost {
 
     private final String PEMJA_PREFIX = "pemja";
-    private final String PEMJA_REQ_VERSION = "pemja==0.3.0";
+    private final String PEMJA_REQ_VERSION = "pemja";
 
     private String importStatement;
     private final String guestLibraryAlias;

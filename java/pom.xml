@@ -16,7 +16,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kafkaconnect.version>3.4.1</kafkaconnect.version>
-        <pemja.version>0.2.4</pemja.version>
+        <pemja.version>0.4.1</pemja.version>
         <sl4j.version>1.7.30</sl4j.version>
         <pcj.version>1.0.0</pcj.version>
         <rest.assured.version>5.3.0</rest.assured.version>
