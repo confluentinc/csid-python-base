@@ -2,11 +2,11 @@
 # Copyright (C) 2021-2023 Confluent, Inc.
 #
 
-version : v1.0
-name : python-base
-agent :
-  machine :
-    type : s1-prod-ubuntu20-04-amd64-1
+version: v1.0
+name: build-test-release
+agent:
+  machine:
+    type: s1-prod-ubuntu20-04-amd64-1
 
 execution_time_limit:
   hours: 2
@@ -58,3 +58,23 @@ after_pipeline:
       - name: Publish Results
         commands:
           - test-results gen-pipeline-report
+queue:
+  - when: "branch != 'master'"
+    processing: parallel
+
+global_job_config:
+  prologue:
+    commands:
+      - sem-version java 11
+      - checkout
+      - make show-args
+      - . vault-setup
+      - . vault-sem-get-secret cpd_gcloud
+      - . vault-sem-get-secret ci-reporting
+      - . vault-sem-get-secret v1/ci/kv/service-foundations/cc-mk-include
+      - make init-ci
+  epilogue:
+    always:
+      commands:
+        - make epilogue-ci
+
