@@ -13,6 +13,43 @@
     <name>Confluent Java-Python Integration Tools</name>
     <version>0.1</version>
 
+    <profiles>
+        <profile>
+            <id>publish-to-s3</id>
+            <distributionManagement>
+                <repository>
+                    <id>confluent-csid-repo</id>
+                    <url>s3://confluent-csid-maven/releases/</url>
+                </repository>
+                <snapshotRepository>
+                    <id>confluent-csid-repo</id>
+                    <url>s3://confluent-csid-maven/snapshots/</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
+        <profile>
+            <id>publish-to-codeartifact</id>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>confluent-codeartifact-internal</id>
+                    <name>confluent-snapshots</name>
+                    <url>
+                        https://confluent-519856050701.d.codeartifact.us-west-2.amazonaws.com/maven/maven-releases
+                    </url>
+                </snapshotRepository>
+                <repository>
+                    <id>confluent-codeartifact-internal</id>
+                    <name>confluent-releases</name>
+                    <url>
+                        https://confluent-519856050701.d.codeartifact.us-west-2.amazonaws.com/maven/maven-releases
+                    </url>
+                </repository>
+            </distributionManagement>
+        </profile>
+    </profiles>
+
+
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kafkaconnect.version>3.4.1</kafkaconnect.version>
@@ -190,6 +227,14 @@
                 </executions>
             </plugin>
         </plugins>
+
+        <extensions>
+            <extension>
+                <groupId>org.springframework.build</groupId>
+                <artifactId>aws-maven</artifactId>
+                <version>5.0.0.RELEASE</version>
+            </extension>
+        </extensions>
     </build>
 
 </project>

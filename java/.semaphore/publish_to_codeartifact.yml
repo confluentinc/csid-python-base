@@ -1,0 +1,52 @@
+#
+# Copyright (C) 2021-2023 Confluent, Inc.
+#
+
+version : v1.0
+name : Publish to Code Artifact
+agent :
+  machine :
+    type : s1-prod-ubuntu20-04-amd64-1
+
+global_job_config :
+  env_vars :
+    - name : MAVEN_OPTS
+      value : "-Dmaven.repo.local=.m2"
+  secrets :
+    - name : vault_sem2_approle
+  prologue :
+    commands :
+      - checkout
+      - . vault-setup
+      - . vault-sem-get-secret cpd_gcloud
+      - . vault-sem-get-secret ci-reporting
+      - . vault-sem-get-secret v1/ci/kv/service-foundations/cc-mk-include
+      - . vault-sem-get-secret csid_aws_credentials
+      - . vault-sem-get-secret csid-bundles
+      - chmod 700 ~/.m2/settings.xml
+      - sem-version java 17
+  epilogue :
+    always :
+      commands :
+        - make epilogue-ci
+
+
+blocks :
+  - name : Deploy to JFrog
+    task :
+      jobs :
+        - name : Publish Artifacts
+          commands :
+            - checkout
+            - cache restore
+            - cache restore csid-csm-ssh-keys
+            # Download all JARs possible and compile as much as possible
+            # Use -q to reduce output spam
+            - ./mvnw -DskipTests -Ppublish-to-codeartifact deploy
+
+after_pipeline :
+  task :
+    jobs :
+      - name : Publish Results
+        commands :
+          - test-results gen-pipeline-report
