@@ -23,7 +23,7 @@ class TestPythonEnvironment {
         String defaultPythonPath = PyUtils.defaultPythonExecutablePath().toString();
 
         PythonEnvironment pyEnv = PythonEnvironment.build(
-                new String[]{"algorithms==0.1.4", "find-libpython==0.3.0", "pemja==0.3.0", "arrow"}, Paths.get(tmpDir),
+                new String[]{"algorithms==0.1.4", "find-libpython==0.3.0", "pemja", "arrow"}, Paths.get(tmpDir),
                 Paths.get(defaultPythonPath), null, null, null);
 
         String envPython = pyEnv.getPythonExePath();
@@ -111,7 +111,7 @@ class TestPythonEnvironment {
         String defaultPythonPath = PyUtils.defaultPythonExecutablePath().toString();
 
         PythonEnvironment pyEnv = PythonEnvironment.build(
-                new String[]{"algorithms==0.1.4", "find-libpython==0.3.0", "pemja==0.3.0"}, Paths.get(tmpDir),
+                new String[]{"algorithms==0.1.4", "find-libpython==0.3.0", "pemja"}, Paths.get(tmpDir),
                 Paths.get(defaultPythonPath), "venv1", null, null);
 
         String envPython = pyEnv.getPythonExePath();

@@ -118,7 +118,7 @@ public class TestEnd2End extends KafkaConnectBase {
         ObjectMapper connectorConfigMapper = new ObjectMapper();
 
         Map<String, Object> connectorMap = new HashMap<>();
-        connectorMap.put("name", "pytools-test-1");
+        connectorMap.put("name", "pytools-test-2");
         connectorMap.put("config", new HashMap<>());
 
         Map<String, Object> configMap = (Map<String, Object>) connectorMap.get("config");

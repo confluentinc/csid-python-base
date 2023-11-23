@@ -1,0 +1,73 @@
+#
+# Copyright (C) 2021-2023 Confluent, Inc.
+#
+
+version : v1.0
+name : python-base
+agent :
+  machine :
+    type : s1-prod-ubuntu20-04-amd64-1
+
+auto_cancel :
+  running :
+    when : "branch != 'main'"
+
+global_job_config :
+  env_vars :
+    - name : MAVEN_OPTS
+      value : "-Dmaven.repo.local=.m2"
+  secrets :
+    - name : vault_sem2_approle
+  prologue :
+    commands :
+      - checkout
+      - . vault-setup
+      - . vault-sem-get-secret cpd_gcloud
+      - . vault-sem-get-secret ci-reporting
+      - . vault-sem-get-secret v1/ci/kv/service-foundations/cc-mk-include
+      - . vault-sem-get-secret csid-bundles
+      - chmod 700 ~/.m2/settings.xml
+      - make docker-login-ci
+      - sem-version java 17
+  epilogue :
+    always :
+      commands :
+        - make epilogue-ci
+
+blocks :
+  - name : Setup
+    dependencies : [ ]
+    task :
+      jobs :
+        - name : Dependencies
+          commands :
+            - cache restore
+            - cache restore csid-csm-ssh-keys
+            - cache restore csid-csm-plugins-ssh-keys
+            # Download all JARs possible and compile as much as possible
+            # Use -q to reduce output spam
+            - ./mvnw -q dependency:go-offline clean test-compile -Pci
+            - cache store
+            # cache the generated ssl keys for tests
+            - cache delete csid-csm-ssh-keys
+            - cache store csid-csm-ssh-keys test-utils/src/main/resources
+            - cache delete csid-csm-plugins-ssh-keys
+            - cache store csid-csm-plugins-ssh-keys plugins/authenticators/mutual-tls-with-ldap-vault/src/test/resources
+
+
+after_pipeline :
+  task :
+    jobs :
+      - name : Publish Results
+        commands :
+          - test-results gen-pipeline-report
+
+promotions :
+  - name : Publish to External Maven Repository
+    pipeline_file : publish_to_s3.yml
+    auto_promote :
+      when : "result = 'passed' and tag =~ '.*'"
+  - name : Publish to Internal Maven Repository
+    pipeline_file : publish_to_codeartifact.yml
+    auto_promote :
+      when : "result = 'passed' and tag =~ '.*'"
