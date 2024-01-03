@@ -58,6 +58,11 @@ after_pipeline:
       - name: Publish Results
         commands:
           - test-results gen-pipeline-report
+
+promotions:
+  - name: Publish to S3
+    pipeline_file: publish_to_s3.yml
+
 queue:
   - when: "branch != 'master'"
     processing: parallel
