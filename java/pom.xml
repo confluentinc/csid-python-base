@@ -13,6 +13,19 @@
     <name>Confluent Java-Python Integration Tools</name>
     <version>0.1</version>
 
+    <repositories>
+        <repository>
+            <id>confluent-codeartifact-internal</id>
+            <url>https://confluent-519856050701.d.codeartifact.us-west-2.amazonaws.com/maven/maven/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <profiles>
         <profile>
             <id>publish-to-s3</id>
