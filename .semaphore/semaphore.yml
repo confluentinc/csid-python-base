@@ -62,6 +62,9 @@ promotions:
   - name: Publish to S3
     pipeline_file: publish_to_s3.yml
 
+  - name: Publish to CodeArtifact
+    pipeline_file: publish_to_codeartifact.yml
+    
 queue:
   - when: "branch != 'master'"
     processing: parallel
