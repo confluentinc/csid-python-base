@@ -18,7 +18,6 @@ global_job_config :
     commands :
       - checkout
       - . vault-setup
-      - . vault-sem-get-secret cpd_gcloud
       - . vault-sem-get-secret ci-reporting
       - . vault-sem-get-secret v1/ci/kv/service-foundations/cc-mk-include
       - . vault-sem-get-secret csid_aws_credentials
