@@ -26,7 +26,7 @@ blocks:
           - . vault-setup
           - chmod 700 ~/.m2/settings.xml
           - chmod 700 ~/.netrc
-          - sem-version java 8
+          - sem-version java 11
       jobs:
         - name: Build without Tests
           commands:
