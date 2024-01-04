@@ -30,7 +30,7 @@ blocks:
       jobs:
         - name: Build without Tests
           commands:
-            - ./mvnw clean install -DskipTests
+            - ./mvnw -f ./java/pom.xml clean install -DskipTests
             - cache store
   - name: Test
     dependencies: [Build]
@@ -42,10 +42,10 @@ blocks:
       jobs:
         - name: Unit Tests
           commands:
-            - ./mvnw -Punit test
+            - ./mvnw -f ./java/pom.xml -Punit test
         - name: Integration Tests
           commands:
-            - ./mvnw verify -Pintegration
+            - ./mvnw -f ./java/pom.xml verify -Pintegration
 
       epilogue:
         always:
@@ -75,4 +75,4 @@ global_job_config:
       - . vault-sem-get-secret cpd_gcloud
       - . vault-sem-get-secret ci-reporting
       - . vault-sem-get-secret v1/ci/kv/service-foundations/cc-mk-include
-      - cd java
+
