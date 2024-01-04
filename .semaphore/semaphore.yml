@@ -3,7 +3,7 @@
 #
 
 version: v1.0
-name: build-test-release
+name: Python integration java lib
 agent:
   machine:
     type: s1-prod-ubuntu20-04-amd64-1
@@ -72,14 +72,14 @@ global_job_config:
     commands:
       - sem-version java 11
       - checkout
-      - make show-args
+#      - make show-args
       - . vault-setup
       - . vault-sem-get-secret cpd_gcloud
       - . vault-sem-get-secret ci-reporting
       - . vault-sem-get-secret v1/ci/kv/service-foundations/cc-mk-include
-      - make init-ci
+#      - make init-ci
   epilogue:
     always:
       commands:
-        - make epilogue-ci
+#        - make epilogue-ci
 
