@@ -30,7 +30,7 @@ blocks:
       jobs:
         - name: Build without Tests
           commands:
-            - ./mvnw -f ./java/pom.xml clean install -DskipTests
+            - cd java; ./mvnw clean install -DskipTests
             - cache store
   - name: Test
     dependencies: [Build]
@@ -42,10 +42,10 @@ blocks:
       jobs:
         - name: Unit Tests
           commands:
-            - ./mvnw -f ./java/pom.xml -Punit test
+            - cd java; ./mvnw -Punit test
         - name: Integration Tests
           commands:
-            - ./mvnw -f ./java/pom.xml verify -Pintegration
+            - cd java; ./mvnw verify -Pintegration
 
       epilogue:
         always:
