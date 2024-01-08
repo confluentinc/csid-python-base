@@ -3,7 +3,7 @@
 #
 
 version: v1.0
-name: Python integration java lib
+name: build-test-release
 agent:
   machine:
     type: s1-prod-ubuntu20-04-amd64-1
@@ -64,7 +64,7 @@ promotions:
 
   - name: Publish to CodeArtifact
     pipeline_file: publish_to_codeartifact.yml
-    
+
 queue:
   - when: "branch != 'master'"
     processing: parallel
@@ -74,7 +74,13 @@ global_job_config:
     commands:
       - sem-version java 11
       - checkout
+      - make show-args
       - . vault-setup
       - . vault-sem-get-secret ci-reporting
       - . vault-sem-get-secret v1/ci/kv/service-foundations/cc-mk-include
+      - make init-ci
+  epilogue:
+    always:
+      commands:
+        - make epilogue-ci
 
