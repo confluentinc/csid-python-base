@@ -10,10 +10,15 @@ import java.nio.file.Paths;
 public class PyUtils {
     @SneakyThrows
     public static Path defaultPythonExecutablePath() {
-        String cmdOutput = OperatingSystemProcess.execute(new String[]{"which", "python3"});
+        return PyUtils.defaultPythonExecutablePath("python3");
+    }
+
+    @SneakyThrows
+    public static Path defaultPythonExecutablePath(String pythonName) {
+        String cmdOutput = OperatingSystemProcess.execute(new String[]{"which", pythonName});
 
         if (cmdOutput.contains("not found")) {
-            throw new IOException("No default python3 instance found");
+            throw new IOException("No " + pythonName + " instance found");
         }
         return Paths.get(cmdOutput);
     }

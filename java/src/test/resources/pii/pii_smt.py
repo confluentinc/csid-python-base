@@ -16,11 +16,12 @@ _settings = None
 def init(settings):
     global _settings
     _settings = json.loads(settings) if len(settings) > 0 else {}
-    # global pii_smt_context
-#    pii_smt_context = init_context(models=settings_obj.get("models"),
-#                                   entity_types=settings_obj.get("entity_types"),
-#                                   recognizers=settings_obj.get("recognizers"),
-#                                   languages=settings_obj.get("languages", "auto"))
+    global pii_smt_context
+    pii_smt_context = init_context(models=_settings.get("models"),
+                                   entity_types=_settings.get("entity_types"),
+                                   recognizers=_settings.get("recognizers"),
+                                   languages=_settings.get("languages", "auto"))
+    print("context initialised")
 
 
 def init_context(models=None, entity_types=None, recognizers=None, languages="en"):
@@ -53,8 +54,11 @@ def init_context(models=None, entity_types=None, recognizers=None, languages="en
 
 
 def anonymize(raw_text, language=None):
-    pii_smt_context = init_context()
-    print("context initialised")
+    # pii_smt_context = init_context(models=_settings.get("models"),
+    #                                entity_types=_settings.get("entity_types"),
+    #                                recognizers=_settings.get("recognizers"),
+    #                                languages=_settings.get("languages", "auto"))
+    # print("context initialised")
     if not language:
         language = pii_smt_context.lang_code if pii_smt_context.lang_code \
             else pii_smt_context.lang_detector.detect_lang(raw_text)
@@ -105,7 +109,7 @@ def transform(record):
 
 
 if __name__ == '__main__':
-    init("{\"models\": \"en_core_web_lg, fr_core_news_lg\", \"languages\": \"en, fr\"}")
+    init("{\"models\": \"en_core_web_sm, fr_core_news_sm\", \"languages\": \"en, fr\"}")
 
     record = {'key_schema': 'INT32',
               'topic': 'test-topic-9094d9cc-8b96-4cb1-832f-d5d1ad2718dd',

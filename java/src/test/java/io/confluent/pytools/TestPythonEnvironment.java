@@ -67,7 +67,7 @@ class TestPythonEnvironment {
         String pythonPath = "python3.9";
 
         PythonEnvironment pyEnv = PythonEnvironment.build(
-                new String[]{"algorithms==0.1.4", "find-libpython==0.3.0", "pemja==0.3.0", "arrow"}, Paths.get(tmpDir),
+                new String[]{"algorithms==0.1.4", "find-libpython==0.5.0", "pemja==0.6.1", "arrow"}, Paths.get(tmpDir),
                 Paths.get(pythonPath), null, null, null);
 
         String envPython = pyEnv.getPythonExePath();

@@ -77,6 +77,7 @@ public class PySourceConnectorTask extends SourceTask {
         offsets = context.offsetStorageReader().offset(sourcePartition);
         if (offsets == null) {
             offsets = new HashMap<>();
+            offsets.put("latest", 0);
         }
 
         // call a configure() function in python?

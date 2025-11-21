@@ -82,8 +82,10 @@ public class PythonHost {
 
         // now that the env is running, we call "import <importStatement>" to be ready to call the function
         guestLibraryAlias = "guest_" + UUID.randomUUID().toString().replace("-", "_");
+        System.out.println("preparing to import " + guestLibraryAlias);
         pythonEnv.executePythonStatement("import " + importStatement + " as " + guestLibraryAlias);
         //pythonEnv.executePythonStatement("print(dir(" + guestLibraryAlias + "))");
+        System.out.println("PythonHost built");
 
     }
 

@@ -13,7 +13,10 @@ def init(settings, offsets):
 def test_offsets(offsets):
     print("offsets:")
     print(offsets)
-
+    print(type(offsets))
+    offsets = offsets.to_dict()
+    print(offsets)
+    print(type(offsets))
     offset = offsets.get('latest', 0)
 
     return [{

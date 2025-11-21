@@ -1,3 +1,3 @@
 docker login
-docker build . -t connect-with-devtools:1.0.11 -t ldom/connect-with-devtools:latest
-docker image push ldom/connect-with-devtools:latest
+docker build . -t connect-with-devtools:1.1.0 -t laubory/connect-with-devtools:latest
+docker image push laubory/connect-with-devtools:latest

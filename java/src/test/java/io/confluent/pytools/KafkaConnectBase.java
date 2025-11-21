@@ -23,7 +23,7 @@ import static io.restassured.RestAssured.given;
 
 
 public class KafkaConnectBase extends KafkaBase {
-    protected static final String CONNECT_IMAGE = "ldom/connect-with-devtools:latest"; // "confluentinc/cp-kafka-connect:7.4.1";
+    protected static final String CONNECT_IMAGE = "laubory/connect-with-devtools:latest"; // "confluentinc/cp-kafka-connect:7.4.1";
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConnectBase.class);
     @TempDir
     static Path libTempDir;
@@ -44,7 +44,6 @@ public class KafkaConnectBase extends KafkaBase {
                 .withNetworkAliases("schema-registry")
                 .withKafka(kafka)
                 .dependsOn(kafka);
-
 
         connect = new ConnectContainer(DockerImageName.parse(CONNECT_IMAGE), kafka, schemaRegistry)
                 .withNetworkAliases("connect")

@@ -112,8 +112,8 @@ public class PyConnectSmt<R extends ConnectRecord<R>> implements Transformation<
 
         // call a configure() function in python?
         if (!initMethod.equals("")) {
-            pythonHost.callPythonMethod(initMethod, jsonPrivateSettings);
             System.out.println("calling the init method: " + initMethod);
+            pythonHost.callPythonMethod(initMethod, jsonPrivateSettings);
         }
     }
 

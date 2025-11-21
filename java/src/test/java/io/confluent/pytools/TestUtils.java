@@ -17,10 +17,7 @@ public class TestUtils {
             }
         }
 
-        if (directory.delete()) {
-            System.out.println(directory + " is deleted");
-        }
-        else {
+        if (!directory.delete()) {
             System.out.println("Directory not deleted");
         }
     }

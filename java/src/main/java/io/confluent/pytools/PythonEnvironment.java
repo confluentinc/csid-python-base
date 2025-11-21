@@ -18,7 +18,7 @@ public class PythonEnvironment {
     public PythonEnvironment(String pythonExecutablePath, String[] paths, String venvPath) {
         PythonInterpreterConfig config = PythonInterpreterConfig.newBuilder()
                 .setPythonExec(pythonExecutablePath)
-                .setExcType(PythonInterpreterConfig.ExecType.MULTI_THREAD)
+                .setExcType(PythonInterpreterConfig.ExecType.MULTI_THREAD)  // SUB_INTERPRETER or MULTI_THREAD
                 .addPythonPaths(paths)
                 .build();
 
@@ -98,6 +98,8 @@ public class PythonEnvironment {
         HashMap<String, String> envVars = new HashMap<>();
         envVars.put("PYTHONPATH", sitePackagesPath);
 
+        System.out.println("installing requirements to: " + sitePackagesPath);
+
         ArrayList<String> pipInstallCommand = new ArrayList<>(List.of(new String[]{pythonExecutable, "-m", "pip", "install"}));
         pipInstallCommand.addAll(List.of(requirements));
         if (localDependenciesDirectory != null && localDependenciesDirectory.trim().length() > 0) {
@@ -105,6 +107,7 @@ public class PythonEnvironment {
         }
 
         executeWithRetries(pipInstallCommand.toArray(String[]::new), envVars, 3);
+        System.out.println("done installing requirements");
     }
 
     public String getPythonExePath() {

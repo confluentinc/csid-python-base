@@ -1,23 +1,18 @@
 package io.confluent.pytools;
 
-import io.confluent.connect.json.JsonSchemaConverter;
 import io.confluent.pytools.testutils.*;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
-
-import static org.awaitility.Awaitility.await;
 
 
 public class TestPiiSmt {
@@ -57,7 +52,7 @@ public class TestPiiSmt {
         props.put("transforms.myTransform.type", PyConnectSmt.class.getName()); // io.confluent.pytools.PyConnectSmt
 
         Path scriptsDirectory = Paths.get("src","test", "resources");
-        props.put("transforms.myTransform.python.path", "python3.10");
+        props.put("transforms.myTransform.python.path", "python3.13");
         props.put("transforms.myTransform.scripts.dir", Paths.get(scriptsDirectory.toString(), "pii").toString());
 
         props.put("transforms.myTransform.working.dir", tempDir.toString());
