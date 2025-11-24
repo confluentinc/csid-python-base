@@ -4,11 +4,12 @@ import lombok.SneakyThrows;
 import pemja.core.PythonInterpreter;
 import pemja.core.PythonInterpreterConfig;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static io.confluent.pytools.OperatingSystemProcess.executeWithRetries;
+import static io.confluent.pytools.OperatingSystemProcess.execute;
 
 public class PythonEnvironment {
     private final PythonInterpreter interpreter;
@@ -89,11 +90,11 @@ public class PythonEnvironment {
 
     @SneakyThrows
     private static Path createVirtualEnvironment(Path pythonExecutable, Path venvPath) {
-        OperatingSystemProcess.execute(new String[]{pythonExecutable.toString(), "-m", "venv", venvPath.toString()});
+        execute(new String[]{pythonExecutable.toString(), "-m", "venv", venvPath.toString()});
         return Paths.get(venvPath.toString(), "bin", "python");
     }
 
-    private static void pipInstallRequirements(String pythonExecutable, String[] requirements, String localDependenciesDirectory) {
+    private static void pipInstallRequirements(String pythonExecutable, String[] requirements, String localDependenciesDirectory) throws IOException {
         String sitePackagesPath = PyUtils.getSitePackages(pythonExecutable);
         HashMap<String, String> envVars = new HashMap<>();
         envVars.put("PYTHONPATH", sitePackagesPath);
@@ -106,8 +107,7 @@ public class PythonEnvironment {
             pipInstallCommand.addAll(List.of("--find-links", localDependenciesDirectory));
         }
 
-        executeWithRetries(pipInstallCommand.toArray(String[]::new), envVars, 3);
-        System.out.println("done installing requirements");
+        execute(pipInstallCommand.toArray(String[]::new), envVars);
     }
 
     public String getPythonExePath() {

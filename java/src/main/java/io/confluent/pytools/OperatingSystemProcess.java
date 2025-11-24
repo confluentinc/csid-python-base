@@ -31,6 +31,7 @@ public class OperatingSystemProcess {
 
         try {
             if (p.waitFor() != 0) {
+                System.out.println("execute() failed with: \n" + out);
                 throw new IOException(
                         String.format(
                                 "Failed to execute the command: %s\noutput: %s",

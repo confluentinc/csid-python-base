@@ -5,13 +5,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TestPythonEnvironmentPII {
     @SneakyThrows
@@ -42,6 +42,24 @@ class TestPythonEnvironmentPII {
 
         Assertions.assertTrue(sentenceWithName.contains("<PERSON>"));
         Assertions.assertTrue(sentenceWithAddress.contains("<LOCATION>"));
+
+        // remove temp venv folder
+        TestUtils.deleteDirectory(new File(tmpDir));
+    }
+    @SneakyThrows
+    @Test
+    void venvInstallErrors() {
+        // use volatile java temp dir instead of /tmp/
+        String tmpDir = Files.createTempDirectory(null).toFile().getAbsolutePath();
+        System.out.println("Temp Directory: " + tmpDir);
+
+        String defaultPythonPath = PyUtils.defaultPythonExecutablePath("python3.13").toString();
+        Path scriptsDirectory = Paths.get("src","test", "resources", "pii");
+
+        assertThrows(IOException.class, () -> {
+            new PythonHost(defaultPythonPath, scriptsDirectory.toFile(),
+                    "pii_smt.anonymize", tmpDir, null, "requirements_fail.txt");
+        });
 
         // remove temp venv folder
         TestUtils.deleteDirectory(new File(tmpDir));

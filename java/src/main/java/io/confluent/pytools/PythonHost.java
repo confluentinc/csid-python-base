@@ -34,6 +34,10 @@ public class PythonHost {
     }
 
     public PythonHost(String pythonExecutable, File scriptsDirectory, String entryPoint, String workingDirectory, String localDependenciesDirectory) throws IOException {
+        this(pythonExecutable, scriptsDirectory, entryPoint, workingDirectory, localDependenciesDirectory, "requirements.txt");
+    }
+
+    public PythonHost(String pythonExecutable, File scriptsDirectory, String entryPoint, String workingDirectory, String localDependenciesDirectory, String requirementsFileName) throws IOException {
         // explores the working directory to find requirements.txt
         // and build the PythonEnvironment
 
@@ -54,7 +58,7 @@ public class PythonHost {
         // any requirements.txt?
         List<String> pipRequirements = new ArrayList<>();
         File[] requirements = scriptsDirectory.listFiles(
-                (dir, name) -> name.equalsIgnoreCase("requirements.txt"));
+                (dir, name) -> name.equalsIgnoreCase(requirementsFileName));
         if (requirements != null && requirements.length > 0) {
             File req = requirements[0];
             pipRequirements = Files.readAllLines(req.toPath(), StandardCharsets.UTF_8);
