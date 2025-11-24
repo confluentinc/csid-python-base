@@ -19,7 +19,7 @@ RUN pip3 install pemja
 
 USER appuser
 
-COPY confluent-pytools-0.1-jar-with-dependencies.jar /etc/kafka-connect/jars/
+COPY confluent-pytools-0.3-jar-with-dependencies.jar /etc/kafka-connect/jars/
 COPY *.py /app/
 COPY requirements.txt /app/
 COPY *.json /app/
