@@ -6,6 +6,7 @@
     "private.settings": "{\"conf1\":\"value1\", \"conf2\":\"value2\"}",
     "working.dir": "/tmp/",
     "entry.point": "speed_traps.poll",
+    "python.path": "python3.13",
     "value.converter.schemas.enable": "false",
     "name": "pytools-demo-fields",
     "kafka.topic": "test-topic-48664ea7-6f0f-4b58-a80b-7a01b79c7e83",

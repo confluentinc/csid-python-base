@@ -1,0 +1,4 @@
+property.1 = value 1
+property.2 = another value
+
+# some comments too

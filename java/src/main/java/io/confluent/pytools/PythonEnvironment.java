@@ -16,9 +16,10 @@ public class PythonEnvironment {
 
     private final String pythonExePath;
     private final String virtualEnvironmentPath;
-    public PythonEnvironment(String pythonExecutablePath, String[] paths, String venvPath) {
+    public PythonEnvironment(String pythonExecutablePath, String[] paths, String venvPath, String pythonHome) {
         PythonInterpreterConfig config = PythonInterpreterConfig.newBuilder()
                 .setPythonExec(pythonExecutablePath)
+                .setPythonHome(pythonHome)
                 .setExcType(PythonInterpreterConfig.ExecType.MULTI_THREAD)  // SUB_INTERPRETER or MULTI_THREAD
                 .addPythonPaths(paths)
                 .build();
@@ -81,11 +82,16 @@ public class PythonEnvironment {
         paths.add(venvSitePackages.toString());
         paths.add(venvSitePackages.toString().replaceFirst("/lib/", "/lib64/"));
 
+        String pythonHome = venvSitePackages.toString().replaceFirst("/site-packages", "");
+
         // install pip requirements
         pipInstallRequirements(venvPythonExecutablePath.toString(), pipRequirements, localDependenciesDirectory);
 
         // returns new PythonEnvironment with the proper paths
-        return new PythonEnvironment(venvPythonExecutablePath.toString(), paths.toArray(String[]::new), venvPath.toString());
+        System.out.println("new PythonEnvironment: " + venvPythonExecutablePath + ", paths: " + paths +
+                ", venPath=" + venvPath+ ", pythonHome=" + pythonHome);
+        return new PythonEnvironment(venvPythonExecutablePath.toString(), paths.toArray(String[]::new),
+                venvPath.toString(), pythonHome);
     }
 
     @SneakyThrows
@@ -94,7 +100,8 @@ public class PythonEnvironment {
         return Paths.get(venvPath.toString(), "bin", "python");
     }
 
-    private static void pipInstallRequirements(String pythonExecutable, String[] requirements, String localDependenciesDirectory) throws IOException {
+    private static void pipInstallRequirements(String pythonExecutable, String[] requirements,
+                                               String localDependenciesDirectory) throws IOException {
         String sitePackagesPath = PyUtils.getSitePackages(pythonExecutable);
         HashMap<String, String> envVars = new HashMap<>();
         envVars.put("PYTHONPATH", sitePackagesPath);
