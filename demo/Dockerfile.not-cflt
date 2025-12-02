@@ -10,8 +10,6 @@ RUN useradd -ms /bin/bash appuser
 
 #--------------> install java + Connect
 
-ENV CONNECT_PLUGIN_PATH="/usr/share/java,/usr/share/confluent-hub-components,/etc/kafka-connect/jars/"
-
 RUN apt-get update && \
     apt-get install -y openjdk-21-jre-headless lsb-release iputils-ping nano && \
     apt-get clean;
@@ -71,26 +69,30 @@ USER appuser
 # COPY confluent-pytools-0.3.1-jar-with-dependencies.jar /etc/kafka-connect/jars/
 COPY confluent-pytools-0.3.1-jar-with-dependencies.jar /usr/share/java
 # /usr/share/java default in connect properties
+
 COPY *.py /app/
 COPY requirements.txt /app/
 COPY *.json /app/
+COPY connector.properties.tpl /app/
+COPY start-connect.sh /app/
 
 USER root
 
 ###########################################################
 # 3 ways to provide Kafka Connect properties to the worker:
 ###########################################################
-# 1: provide env vars below
+# 1: provide env vars below or with the '-e' flag when calling 'docker run'
 # 2: or use a mix of ENV VARS below and properties that you add to connector.properties.tpl
 # format for env vars = (1) prefix with CONNECT_ (2) use _ to separate elements
 # --> CONNECT_BOOTSTRAP_SERVERS becomes bootstrap.servers
 
 ENV CONNECT_BOOTSTRAP_SERVERS=localhost:29092
 
-RUN python3 app/env_to_props.py app/connector.properties.tpl  /etc/kafka/connect.properties
-
 # 3: provide your own file and uncomment the following line
 # COPY connect.properties /etc/kafka/connect.properties
 
 CMD ["sleep", "infinity"]
-# CMD ["/usr/bin/connect-distribute", "/etc/kafka/connect.properties"]
+# for option 1 and 2, you have to use (it includes putting the env vars into the properties file):
+# CMD ["/app/start-connect.sh"]
+# for option 3, you can use:
+# CMD ["/usr/bin/connect-distributed", "/etc/kafka/connect.properties"]
