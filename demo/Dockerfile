@@ -11,7 +11,7 @@ RUN useradd -ms /bin/bash appuser
 #--------------> install java + Connect
 
 RUN apt-get update && \
-    apt-get install -y openjdk-21-jre-headless lsb-release iputils-ping nano && \
+    apt-get install -y openjdk-21-jdk-headless lsb-release iputils-ping nano && \
     apt-get clean;
 
 # Fix certificate issues
@@ -42,6 +42,9 @@ Signed-by: /etc/apt/keyrings/confluent.gpg \n\
 
 COPY confluent-kafka_8.1.0-1_all.deb .
 RUN apt install ./confluent-kafka_8.1.0-1_all.deb
+
+RUN chmod -R ag+w /etc/kafka
+RUN chmod -R ag+w /var/log/kafka
 
 #--------------> python env
 
@@ -75,8 +78,6 @@ COPY *.json /app/
 COPY connector.properties.tpl /app/
 COPY start-connect.sh /app/
 
-USER root
-
 ###########################################################
 # 3 ways to provide Kafka Connect properties to the worker:
 ###########################################################
@@ -90,8 +91,10 @@ USER root
 # 3: provide your own file and uncomment the following line
 # COPY connect.properties /etc/kafka/connect.properties
 
-CMD ["sleep", "infinity"]
 # for option 1 and 2, you have to use (it includes putting the env vars into the properties file):
-#CMD ["/app/start-connect.sh"]
+CMD ["/app/start-connect.sh"]
 # for option 3, you can use:
 # CMD ["/usr/bin/connect-distributed", "/etc/kafka/connect.properties"]
+
+# for debugging purposes:
+#CMD ["sleep", "infinity"]

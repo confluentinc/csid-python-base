@@ -61,8 +61,6 @@
         </profile>
     </profiles>
 
-
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kafkaconnect.version>3.4.1</kafkaconnect.version>
@@ -83,6 +81,12 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-connect-json-schema-converter</artifactId>
+            <version>${confluentconnect.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-connect-avro-converter</artifactId>
             <version>${confluentconnect.version}</version>
         </dependency>
 
