@@ -71,7 +71,7 @@
         <pcj.version>1.0.0</pcj.version>
         <rest.assured.version>5.3.0</rest.assured.version>
         <common.io.version>2.14.0</common.io.version>
-        <jinjava.version>2.7.0</jinjava.version>
+        <jinjava.version>2.7.6</jinjava.version>
         <kafka.compile.version>3.7.1</kafka.compile.version>
         <testcontainers.version>1.18.3</testcontainers.version>
         <junit.version>5.8.2</junit.version>
